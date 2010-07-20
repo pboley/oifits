@@ -1,0 +1,210 @@
+Help on module oifits:
+
+NAME
+    oifits - A module for reading/writing OIFITS files
+
+FILE
+    /home/pboley/MYSOs/MIDI/OIFITS/oifits.py
+
+DESCRIPTION
+    This module is NOT related to the OIFITS Python module provided at
+    http://www.mrao.cam.ac.uk/research/OAS/oi_data/oifits.html
+    It is a (better) alternative.
+    
+    To open an existing OIFITS file, use the oifits.open(filename)
+    function.  This will return an oifits object with the following
+    members (any of which can be None):
+    
+       array: a dictionary of interferometric arrays, as defined by the
+       OI_ARRAY tables.  The dictionary key is the name of the array
+       (ARRNAME).
+    
+       target: a dictionary of targets, as defined by the rows of the
+       OI_TARGET table.  The dictionary key (an integer) corresponds to
+       TARGET_ID.
+    
+       wavelength: a dictionary of wavelength tables (OI_WAVELENGTH).  The
+       dictionary key is the name of the instrument/settings (INSNAME).
+    
+       vis, vis2 and t3: lists of objects containing all the measurement
+       information.  Each list member corresponds to a row in an
+       OI_VIS/OI_VIS2/OI_T3 table.
+    
+    This module makes an ad-hoc, backwards-compatible change to the OIFITS
+    revision 1 standard originally described in Pauls et al., 2005, PASP,
+    117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files produced by
+    this file contain two additional columns for the correlated flux,
+    CFLUX and CFLUXERR , which are arrays with a length corresponding to
+    the number of wavelength elements (just as VISAMP/VIS2DATA).
+    
+    The main purpose of this module is to allow easy access to your OIFITS
+    data within Python, where you can then analyze it in any way you want.
+    It is not really intended for making changes to OIFITS data without
+    breaking the structure (e.g. the cross-references between tables), or
+    for creating OIFITS files from scratch.  However, the module also
+    provides a simple mechanism for combining multiple oifits objects,
+    achieved by using the '+' operator on two oifits objects: result = a +
+    b.  The result can then be written to a file using
+    result.save(filename).
+    
+    For further information, contact Paul Boley (boley@mpia-hd.mpg.de).
+
+CLASSES
+    OI_ARRAY
+    OI_STATION
+    OI_T3
+    OI_TARGET
+    OI_VIS
+    OI_VIS2
+    OI_WAVELENGTH
+    oifits
+    
+    class OI_ARRAY
+     |  Contains all the data for a single OI_ARRAY table.
+     |  
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, header, data)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self, verbose=0)
+     |      Print the array's center coordinates.  If verbosity >= 1,
+     |      print information about each station.
+    
+    class OI_STATION
+     |  This class corresponds to a single row (i.e. single
+     |  station/telescope) of an OI_ARRAY table.
+     |  
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, sta_index, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None])
+     |  
+     |  __ne__(self, other)
+    
+    class OI_T3
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, header, row, wavelength, target, array=None)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self)
+    
+    class OI_TARGET
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, row)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  get_id(self, parent)
+     |      Get the key of the given target in the parent oifits
+     |      object.  Note that this key is an integer, and corresponds to
+     |      the TARGET_ID value in the OIFITS specification.
+     |  
+     |  info(self)
+    
+    class OI_VIS
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, header, row, wavelength, target, array=None)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self)
+    
+    class OI_VIS2
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, header, row, wavelength, target, array=None)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self)
+    
+    class OI_WAVELENGTH
+     |  Methods defined here:
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self, header, data)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self)
+    
+    class oifits
+     |  Methods defined here:
+     |  
+     |  __add__(self, other)
+     |      Consistently combine two separate oifits objects.  Note
+     |      that targets can be matched by name only (e.g. if coordinates
+     |      differ) by setting oifits.matchtargetbyname to True.  The same
+     |      goes for stations of the array (controlled by
+     |      oifits.matchstationbyname)
+     |  
+     |  __eq__(self, other)
+     |  
+     |  __init__(self)
+     |  
+     |  __ne__(self, other)
+     |  
+     |  info(self, recursive=True, verbose=0)
+     |      Print out a summary of the contents of the oifits object.
+     |      Set recursive=True to obtain more specific information about
+     |      each of the individual components, and verbose to an integer
+     |      to increase the verbosity level.
+     |  
+     |  isconsistent(self)
+     |      Returns True if the object is entirely self-contained,
+     |      i.e. all cross-references to wavelength tables, arrays,
+     |      stations etc. in the measurements refer to elements which are
+     |      stored in the oifits object.  Note that an oifits object can
+     |      be 'consistent' in this sense without being 'valid' as checked
+     |      by isvalid().
+     |  
+     |  isvalid(self)
+     |      Returns True of the oifits object is both consistent (as
+     |      determined by isconsistent()) and conforms to the OIFITS
+     |      standard (according to Pauls et al., 2005, PASP, 117, 1255).
+     |  
+     |  save(self, filename)
+     |      Write the contents of the oifits object to a file in OIFITS
+     |      format.
+
+FUNCTIONS
+    open(filename)
+        Open an OIFITS file.
+
+DATA
+    __author__ = 'Paul Boley'
+    __date__ = '20 July 2010'
+    __email__ = 'boley@mpia-hd.mpg.de'
+    __version__ = '0.2'
+    matchstationbyname = False
+    matchtargetbyname = False
+    refdate = datetime.datetime(2000, 1, 1, 0, 0)
+
+VERSION
+    0.2
+
+DATE
+    20 July 2010
+
+AUTHOR
+    Paul Boley
+
+
