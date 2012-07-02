@@ -4,7 +4,7 @@ NAME
     oifits - A module for reading/writing OIFITS files
 
 FILE
-    /home/pboley/MYSOs/MIDI/OIFITS/oifits.py
+    /home/pboley/oifits/oifits.py
 
 DESCRIPTION
     This module is NOT related to the OIFITS Python module provided at
@@ -13,25 +13,24 @@ DESCRIPTION
     
     To open an existing OIFITS file, use the oifits.open(filename)
     function.  This will return an oifits object with the following
-    members (any of which can be None):
+    members (any of which can be empty dictionaries or numpy arrays):
     
        array: a dictionary of interferometric arrays, as defined by the
        OI_ARRAY tables.  The dictionary key is the name of the array
        (ARRNAME).
     
-       target: a dictionary of targets, as defined by the rows of the
-       OI_TARGET table.  The dictionary key (an integer) corresponds to
-       TARGET_ID.
+       target: a numpy array of targets, as defined by the rows of the
+       OI_TARGET table.
     
        wavelength: a dictionary of wavelength tables (OI_WAVELENGTH).  The
        dictionary key is the name of the instrument/settings (INSNAME).
     
-       vis, vis2 and t3: lists of objects containing all the measurement
-       information.  Each list member corresponds to a row in an
-       OI_VIS/OI_VIS2/OI_T3 table.
+       vis, vis2 and t3: numpy arrays of objects containing all the
+       measurement information.  Each list member corresponds to a row in
+       an OI_VIS/OI_VIS2/OI_T3 table.
     
     This module makes an ad-hoc, backwards-compatible change to the OIFITS
-    revision 1 standard originally described in Pauls et al., 2005, PASP,
+    revision 1 standard originally described by Pauls et al., 2005, PASP,
     117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files produced by
     this file contain two additional columns for the correlated flux,
     CFLUX and CFLUXERR , which are arrays with a length corresponding to
@@ -39,13 +38,32 @@ DESCRIPTION
     
     The main purpose of this module is to allow easy access to your OIFITS
     data within Python, where you can then analyze it in any way you want.
-    It is not really intended for making changes to OIFITS data without
-    breaking the structure (e.g. the cross-references between tables), or
-    for creating OIFITS files from scratch.  However, the module also
-    provides a simple mechanism for combining multiple oifits objects,
-    achieved by using the '+' operator on two oifits objects: result = a +
-    b.  The result can then be written to a file using
-    result.save(filename).
+    As of version 0.3, the module can now be used to create OIFITS files
+    from scratch without serious pain.  Be warned, creating an array table
+    from scratch is probably like nailing jelly to a tree.  In a future
+    verison this will become easier.
+    
+    The module also provides a simple mechanism for combining multiple
+    oifits objects, achieved by using the '+' operator on two oifits
+    objects: result = a + b.  The result can then be written to a file
+    using result.save(filename).
+    
+    Many of the parameters and their meanings are not specifically
+    documented here.  However, the nomenclature mirrors that of the OIFITS
+    standard, so it is recommended to use this module with the PASP
+    reference above in hand.
+    
+    Beginning with version 0.3, the OI_VIS/OI_VIS2/OI_T3 classes now use
+    masked arrays for convenience, where the mask is defined via the
+    'flag' member of these classes.  Beware of the following subtlety: as
+    before, the array data are accessed via (for example) OI_VIS.visamp;
+    however, OI_VIS.visamp is just a method which constructs (on the fly)
+    a masked array from OI_VIS._visamp, which is where the data are
+    actually stored.  This is done transparently, and the data can be
+    accessed and modified transparently via the "visamp" hidden attribute.
+    The same goes for correlated fluxes, differential/closure phases,
+    triple products, etc.  See the notes on the individual classes for a
+    list of all the "hidden" attributes.
     
     For further information, contact Paul Boley (boley@mpia-hd.mpg.de).
 
@@ -60,15 +78,22 @@ CLASSES
     oifits
     
     class OI_ARRAY
-     |  Contains all the data for a single OI_ARRAY table.
+     |  Contains all the data for a single OI_ARRAY table.  Note the
+     |  hidden convenience attributes latitude, longitude, and altitude.
      |  
      |  Methods defined here:
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, header, data)
+     |  __getattr__(self, attrname)
+     |  
+     |  __init__(self, frame, arrxyz, stations=())
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
+     |  
+     |  get_station_by_name(self, name)
      |  
      |  info(self, verbose=0)
      |      Print the array's center coordinates.  If verbosity >= 1,
@@ -82,18 +107,31 @@ CLASSES
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, sta_index, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None])
+     |  __init__(self, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None])
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
     
     class OI_T3
+     |  Class for storing triple product and closure phase data.
+     |  To access the data, use the following hidden attributes:
+     |  
+     |  t3amp, t3amperr, t3phi, t3phierr
+     |  
      |  Methods defined here:
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, header, row, wavelength, target, array=None)
+     |  __getattr__(self, attrname)
+     |  
+     |  __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord, v1coord, u2coord, v2coord, wavelength, target, array=None, station=(None, None, None))
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
+     |  
+     |  __setattr__(self, attrname, value)
      |  
      |  info(self)
     
@@ -102,36 +140,56 @@ CLASSES
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, row)
+     |  __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0, sysvel=0.0, veltyp='TOPCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0, pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN')
      |  
      |  __ne__(self, other)
      |  
-     |  get_id(self, parent)
-     |      Get the key of the given target in the parent oifits
-     |      object.  Note that this key is an integer, and corresponds to
-     |      the TARGET_ID value in the OIFITS specification.
+     |  __str__(self)
      |  
      |  info(self)
     
     class OI_VIS
+     |  Class for storing visibility amplitude and differential phase data.
+     |  To access the data, use the following hidden attributes:
+     |  
+     |  visamp, visamperr, visphi, visphierr, flag;
+     |  and possibly cflux, cfluxerr.
+     |  
      |  Methods defined here:
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, header, row, wavelength, target, array=None)
+     |  __getattr__(self, attrname)
+     |  
+     |  __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord, vcoord, wavelength, target, array=None, station=(None, None), cflux=None, cfluxerr=None)
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
+     |  
+     |  __setattr__(self, attrname, value)
      |  
      |  info(self)
     
     class OI_VIS2
+     |  Class for storing squared visibility amplitude data.
+     |  To access the data, use the following hidden attributes:
+     |  
+     |  vis2data, vis2err
+     |  
      |  Methods defined here:
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, header, row, wavelength, target, array=None)
+     |  __getattr__(self, attrname)
+     |  
+     |  __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength, target, array=None, station=(None, None))
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
+     |  
+     |  __setattr__(self, attrname, value)
      |  
      |  info(self)
     
@@ -140,9 +198,11 @@ CLASSES
      |  
      |  __eq__(self, other)
      |  
-     |  __init__(self, header, data)
+     |  __init__(self, eff_wave, eff_band=None)
      |  
      |  __ne__(self, other)
+     |  
+     |  __repr__(self)
      |  
      |  info(self)
     
@@ -186,23 +246,23 @@ CLASSES
      |      format.
 
 FUNCTIONS
-    open(filename)
+    open(filename, quiet=False)
         Open an OIFITS file.
 
 DATA
     __author__ = 'Paul Boley'
-    __date__ = '20 July 2010'
+    __date__ = '2 July 2012'
     __email__ = 'boley@mpia-hd.mpg.de'
-    __version__ = '0.2'
+    __version__ = '0.3'
     matchstationbyname = False
     matchtargetbyname = False
     refdate = datetime.datetime(2000, 1, 1, 0, 0)
 
 VERSION
-    0.2
+    0.3
 
 DATE
-    20 July 2010
+    2 July 2012
 
 AUTHOR
     Paul Boley
