@@ -71,8 +71,8 @@ import copy
 
 __author__ = "Paul Boley"
 __email__ = "boley@mpia-hd.mpg.de"
-__date__ ='2 July 2012'
-__version__ = '0.3'
+__date__ ='1 October 2012'
+__version__ = '0.3.1'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -1324,8 +1324,8 @@ def open(filename, quiet=False):
                 int_time = row.field('INT_TIME')
                 t3amp = np.reshape(row.field('T3AMP'), -1)
                 t3amperr = np.reshape(row.field('T3AMPERR'), -1)
-                t3phi = np.reshape(row.field('T3AMP'), -1)
-                t3phierr = np.reshape(row.field('T3AMPERR'), -1)
+                t3phi = np.reshape(row.field('T3PHI'), -1)
+                t3phierr = np.reshape(row.field('T3PHIERR'), -1)
                 flag = np.reshape(row.field('FLAG'), -1)
                 u1coord = row.field('U1COORD')
                 v1coord = row.field('V1COORD')
