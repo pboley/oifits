@@ -1,16 +1,10 @@
-Help on module oifits:
-
 NAME
-    oifits - A module for reading/writing OIFITS files
+    oifits - A module for reading/writing OIFITS (v1) files
 
 FILE
-    /home/pboley/oifits/oifits.py
+    oifits.py
 
 DESCRIPTION
-    This module is NOT related to the OIFITS Python module provided at
-    http://www.mrao.cam.ac.uk/research/OAS/oi_data/oifits.html
-    It is a (better) alternative.
-    
     To open an existing OIFITS file, use the oifits.open(filename)
     function.  This will return an oifits object with the following
     members (any of which can be empty dictionaries or numpy arrays):
@@ -18,6 +12,8 @@ DESCRIPTION
        array: a dictionary of interferometric arrays, as defined by the
        OI_ARRAY tables.  The dictionary key is the name of the array
        (ARRNAME).
+    
+       header: the header from the primary HDU of the file.
     
        target: a numpy array of targets, as defined by the rows of the
        OI_TARGET table.
@@ -29,19 +25,28 @@ DESCRIPTION
        measurement information.  Each list member corresponds to a row in
        an OI_VIS/OI_VIS2/OI_T3 table.
     
+    A summary of the information in the oifits object can be obtained by
+    using the info() method:
+    
+       > import oifits
+       > oifitsobj = oifits.open('foo.fits')
+       > oifitsobj.info()
+    
     This module makes an ad-hoc, backwards-compatible change to the OIFITS
     revision 1 standard originally described by Pauls et al., 2005, PASP,
     117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files produced by
     this file contain two additional columns for the correlated flux,
     CFLUX and CFLUXERR , which are arrays with a length corresponding to
-    the number of wavelength elements (just as VISAMP/VIS2DATA).
+    the number of wavelength elements (just as VISAMP/VIS2DATA).  Revision
+    2 of the OIFITS standard (Duvert, Young & Hummel; arXiv:1510.04556v2)
+    is not yet supported, but will be soon.
     
     The main purpose of this module is to allow easy access to your OIFITS
     data within Python, where you can then analyze it in any way you want.
     As of version 0.3, the module can now be used to create OIFITS files
     from scratch without serious pain.  Be warned, creating an array table
     from scratch is probably like nailing jelly to a tree.  In a future
-    verison this will become easier.
+    verison this may become easier.
     
     The module also provides a simple mechanism for combining multiple
     oifits objects, achieved by using the '+' operator on two oifits
@@ -65,7 +70,7 @@ DESCRIPTION
     triple products, etc.  See the notes on the individual classes for a
     list of all the "hidden" attributes.
     
-    For further information, contact Paul Boley (boley@mpia-hd.mpg.de).
+    For further information, contact Paul Boley (pboley@urfu.ru).
 
 CLASSES
     OI_ARRAY
@@ -251,18 +256,18 @@ FUNCTIONS
 
 DATA
     __author__ = 'Paul Boley'
-    __date__ = '2 July 2012'
-    __email__ = 'boley@mpia-hd.mpg.de'
-    __version__ = '0.3'
+    __date__ = '10 March 2016'
+    __email__ = 'pboley@urfu.ru'
+    __version__ = '0.3.3'
     matchstationbyname = False
     matchtargetbyname = False
     refdate = datetime.datetime(2000, 1, 1, 0, 0)
 
 VERSION
-    0.3
+    0.3.3
 
 DATE
-    2 July 2012
+    10 March 2016
 
 AUTHOR
     Paul Boley

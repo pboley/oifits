@@ -1,9 +1,5 @@
 """
-A module for reading/writing OIFITS files
-
-This module is NOT related to the OIFITS Python module provided at
-http://www.mrao.cam.ac.uk/research/OAS/oi_data/oifits.html
-It is a (better) alternative.
+A module for reading/writing OIFITS (v1) files
 
 To open an existing OIFITS file, use the oifits.open(filename)
 function.  This will return an oifits object with the following
@@ -12,6 +8,8 @@ members (any of which can be empty dictionaries or numpy arrays):
    array: a dictionary of interferometric arrays, as defined by the
    OI_ARRAY tables.  The dictionary key is the name of the array
    (ARRNAME).
+
+   header: the header from the primary HDU of the file.
 
    target: a numpy array of targets, as defined by the rows of the
    OI_TARGET table.
@@ -23,19 +21,28 @@ members (any of which can be empty dictionaries or numpy arrays):
    measurement information.  Each list member corresponds to a row in
    an OI_VIS/OI_VIS2/OI_T3 table.
 
+A summary of the information in the oifits object can be obtained by
+using the info() method:
+
+   > import oifits
+   > oifitsobj = oifits.open('foo.fits')
+   > oifitsobj.info()
+
 This module makes an ad-hoc, backwards-compatible change to the OIFITS
 revision 1 standard originally described by Pauls et al., 2005, PASP,
 117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files produced by
 this file contain two additional columns for the correlated flux,
 CFLUX and CFLUXERR , which are arrays with a length corresponding to
-the number of wavelength elements (just as VISAMP/VIS2DATA).
+the number of wavelength elements (just as VISAMP/VIS2DATA).  Revision
+2 of the OIFITS standard (Duvert, Young & Hummel; arXiv:1510.04556v2)
+is not yet supported, but will be soon.
 
 The main purpose of this module is to allow easy access to your OIFITS
 data within Python, where you can then analyze it in any way you want.
 As of version 0.3, the module can now be used to create OIFITS files
 from scratch without serious pain.  Be warned, creating an array table
 from scratch is probably like nailing jelly to a tree.  In a future
-verison this will become easier.
+verison this may become easier.
 
 The module also provides a simple mechanism for combining multiple
 oifits objects, achieved by using the '+' operator on two oifits
@@ -59,20 +66,24 @@ The same goes for correlated fluxes, differential/closure phases,
 triple products, etc.  See the notes on the individual classes for a
 list of all the "hidden" attributes.
 
-For further information, contact Paul Boley (boley@mpia-hd.mpg.de).
+For further information, contact Paul Boley (pboley@urfu.ru).
    
 """
 
 import numpy as np
 from numpy import double, bool, ma
-import pyfits
+try:
+    import pyfits
+except ImportError:
+    from astropy.io import fits as pyfits
 import datetime
 import copy
+import warnings
 
 __author__ = "Paul Boley"
-__email__ = "boley@mpia-hd.mpg.de"
-__date__ ='1 October 2012'
-__version__ = '0.3.1'
+__email__ = "pboley@urfu.ru"
+__date__ ='10 March 2016'
+__version__ = '0.3.3'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -199,7 +210,7 @@ class OI_WAVELENGTH:
 
     def __init__(self, eff_wave, eff_band=None):
         self.eff_wave = np.array(eff_wave, dtype=double).reshape(-1)
-        if eff_band == None:
+        if type(eff_band) == type(None):
             eff_band = np.zeros_like(eff_wave)
         self.eff_band = np.array(eff_band, dtype=double).reshape(-1)
 
@@ -242,9 +253,9 @@ class OI_VIS:
         self._visamperr = np.array(visamperr, dtype=double).reshape(-1)
         self._visphi = np.array(visphi, dtype=double).reshape(-1)
         self._visphierr = np.array(visphierr, dtype=double).reshape(-1)
-        if cflux != None: self._cflux = np.array(cflux, dtype=double).reshape(-1)
+        if type(cflux) != type(None): self._cflux = np.array(cflux, dtype=double).reshape(-1)
         else: self._cflux = None
-        if cfluxerr != None: self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
+        if type(cfluxerr) != type(None): self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
         else: self._cfluxerr = None
         self.flag = np.array(flag, dtype=bool).reshape(-1)
         self.ucoord = ucoord
@@ -278,12 +289,12 @@ class OI_VIS:
         if attrname in ('visamp', 'visamperr', 'visphi', 'visphierr'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
         elif attrname in ('cflux', 'cfluxerr'):
-            if self.__dict__['_' + attrname] != None:
+            if type(self.__dict__['_' + attrname]) != type(None):
                 return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
             else:
                 return None
         else:
-            raise AttributeError, attrname
+            raise AttributeError(attrname)
 
     def __setattr__(self, attrname, value):
         if attrname in ('visamp', 'visamperr', 'visphi', 'visphierr', 'cflux', 'cfluxerr'):
@@ -349,7 +360,7 @@ class OI_VIS2:
         if attrname in ('vis2data', 'vis2err'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
         else:
-            raise AttributeError, attrname
+            raise AttributeError(attrname)
 
     def __setattr__(self, attrname, value):
         if attrname in ('vis2data', 'vis2err'):
@@ -425,7 +436,7 @@ class OI_T3:
         if attrname in ('t3amp', 't3amperr', 't3phi', 't3phierr'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
         else:
-            raise AttributeError, attrname
+            raise AttributeError(attrname)
 
     def __setattr__(self, attrname, value):
         if attrname in ('vis2data', 'vis2err'):
@@ -480,7 +491,8 @@ class OI_ARRAY:
         self.station = np.empty(0)
         for station in stations:
             tel_name, sta_name, sta_index, diameter, staxyz = station
-            self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz))
+            # Remove whitespace from the station names, which pyfits may leave
+            self.station = np.append(self.station, OI_STATION(tel_name=tel_name.strip(), sta_name=sta_name.strip(), diameter=diameter, staxyz=staxyz))
 
     def __eq__(self, other):
 
@@ -514,7 +526,7 @@ class OI_ARRAY:
             radius = np.sqrt((self.arrxyz**2).sum())
             return radius - 6378100.0  
         else:
-            raise AttributeError, attrname
+            raise AttributeError(attrname)
 
     def __repr__(self):
         return '%s %s %g m, %d station%s'%(self.latitude.asdms(), self.longitude.asdms(), self.altitude, len(self.station), _plurals(len(self.station)))
@@ -539,6 +551,7 @@ class oifits:
     
     def __init__(self):
 
+        self.header = None
         self.wavelength = {}
         self.target = np.empty(0)
         self.array = {}
@@ -554,10 +567,20 @@ class oifits:
         oifits.matchstationbyname)"""
         # Don't do anything if the two oifits objects are not CONSISTENT!
         if self.isconsistent() == False or other.isconsistent() == False:
-            print 'oifits objects are not consistent, bailing.'
-            return
+            raise ValueError('oifits objects are not consistent, bailing')
         
         new = copy.deepcopy(self)
+
+        if new.header != None:
+            if other.header != None:
+                # Older versions of pyfits don't allow combining headers
+                try:
+                    new.header = new.header + other.header
+                except TypeError:
+                    warnings.warn('Warning: Keeping FITS header from first oifits object', UserWarning)
+        elif other.header != None:
+            new.header = other.header.copy()
+
         if len(other.wavelength):
             wavelengthmap = {}
             for key in other.wavelength.keys():
@@ -849,26 +872,42 @@ class oifits:
         format."""
 
         if not self.isconsistent():
-            print 'oifits object is not consistent, refusing to go further'
-            return
+            raise ValueError('oifits object is not consistent; refusing to go further')
 
         hdulist = pyfits.HDUList()
-        hdu = pyfits.PrimaryHDU()
-        hdu.header.update('DATE', datetime.datetime.now().strftime(format='%F'), comment='Creation date')
+        hdu = pyfits.PrimaryHDU(header=self.header)
+        hdu.header['DATE'] = datetime.datetime.now().strftime(format='%F'), 'Creation date'
+        # Remove old oifits.py comments if they are present
+        remcomments = []
+        try:
+            for i, comment in enumerate(hdu.header['COMMENT']):
+                if (('Written by OIFITS Python module' in str(comment)) |
+                    ('http://www.mpia-hd.mpg.de/homes/boley/oifits/' in str(comment)) |
+                    ('http://astro.ins.urfu.ru/pages/~pboley/oifits/' in str(comment))):
+                    remcomments.append(i)
+        except KeyError:
+            # KeyError should be raised if there are no comments
+            pass
+        # Cards should be removed from the bottom, otherwise the
+        # ordering can get messed up and header.ascard.remove can fail
+        remcomments.reverse()
+        for i in remcomments:
+            del hdu.header[('COMMENT', i)]
+        # Add (new) advertisement
         hdu.header.add_comment('Written by OIFITS Python module version %s'%__version__)
-        hdu.header.add_comment('http://www.mpia-hd.mpg.de/homes/boley/oifits/')
+        hdu.header.add_comment('http://astro.ins.urfu.ru/pages/~pboley/oifits/')
 
         wavelengthmap = {}
         hdulist.append(hdu)
         for insname, wavelength in self.wavelength.iteritems():
             wavelengthmap[id(wavelength)] = insname
-            hdu = pyfits.new_table(pyfits.ColDefs((
+            hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs((
                 pyfits.Column(name='EFF_WAVE', format='1E', unit='METERS', array=wavelength.eff_wave),
                 pyfits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
                 )))
-            hdu.header.update('EXTNAME', 'OI_WAVELENGTH')
-            hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
-            hdu.header.update('INSNAME', insname, 'Name of detector, for cross-referencing')
+            hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
+            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
             hdulist.append(hdu)
 
         targetmap = {}
@@ -911,27 +950,27 @@ class oifits:
                 para_err.append(targ.para_err)
                 spectyp.append(targ.spectyp)
 
-            hdu = pyfits.new_table(pyfits.ColDefs((
+            hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs((
                 pyfits.Column(name='TARGET_ID', format='1I', array=target_id),
                 pyfits.Column(name='TARGET', format='16A', array=target),
-                pyfits.Column(name='RAEP0', format='D1', unit='DEGREES', array=raep0),
-                pyfits.Column(name='DECEP0', format='D1', unit='DEGREES', array=decep0),
-                pyfits.Column(name='EQUINOX', format='E1', unit='YEARS', array=equinox),
-                pyfits.Column(name='RA_ERR', format='D1', unit='DEGREES', array=ra_err),
-                pyfits.Column(name='DEC_ERR', format='D1', unit='DEGREES', array=dec_err),
-                pyfits.Column(name='SYSVEL', format='D1', unit='M/S', array=sysvel),
-                pyfits.Column(name='VELTYP', format='A8', array=veltyp),
-                pyfits.Column(name='VELDEF', format='A8', array=veldef),
-                pyfits.Column(name='PMRA', format='D1', unit='DEG/YR', array=pmra),
-                pyfits.Column(name='PMDEC', format='D1', unit='DEG/YR', array=pmdec),
-                pyfits.Column(name='PMRA_ERR', format='D1', unit='DEG/YR', array=pmra_err),
-                pyfits.Column(name='PMDEC_ERR', format='D1', unit='DEG/YR', array=pmdec_err),
-                pyfits.Column(name='PARALLAX', format='E1', unit='DEGREES', array=parallax),
-                pyfits.Column(name='PARA_ERR', format='E1', unit='DEGREES', array=para_err),
-                pyfits.Column(name='SPECTYP', format='A16', array=spectyp)
+                pyfits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
+                pyfits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
+                pyfits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
+                pyfits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
+                pyfits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
+                pyfits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
+                pyfits.Column(name='VELTYP', format='8A', array=veltyp),
+                pyfits.Column(name='VELDEF', format='8A', array=veldef),
+                pyfits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
+                pyfits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
+                pyfits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
+                pyfits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
+                pyfits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
+                pyfits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
+                pyfits.Column(name='SPECTYP', format='16A', array=spectyp)
                 )))
-            hdu.header.update('EXTNAME', 'OI_TARGET')
-            hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
+            hdu.header['EXTNAME'] = 'OI_TARGET'
+            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
             hdulist.append(hdu)
 
         arraymap = {}
@@ -951,20 +990,20 @@ class oifits:
                     sta_index.append(i)
                     diameter.append(station.diameter)
                     staxyz.append(station.staxyz)
-                hdu = pyfits.new_table(pyfits.ColDefs((
+                hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs((
                     pyfits.Column(name='TEL_NAME', format='16A', array=tel_name),
                     pyfits.Column(name='STA_NAME', format='16A', array=sta_name),
                     pyfits.Column(name='STA_INDEX', format='1I', array=sta_index),
                     pyfits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
                     pyfits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)
                     )))
-            hdu.header.update('EXTNAME', 'OI_ARRAY')
-            hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
-            hdu.header.update('ARRNAME', arrname, comment='Array name, for cross-referencing')
-            hdu.header.update('FRAME', array.frame, comment='Coordinate frame')
-            hdu.header.update('ARRAYX', array.arrxyz[0], comment='Array center x coordinate (m)')
-            hdu.header.update('ARRAYY', array.arrxyz[1], comment='Array center y coordinate (m)')
-            hdu.header.update('ARRAYZ', array.arrxyz[2], comment='Array center z coordinate (m)')
+            hdu.header['EXTNAME'] = 'OI_ARRAY'
+            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['ARRNAME'] = arrname, 'Array name, for cross-referencing'
+            hdu.header['FRAME'] = array.frame, 'Coordinate frame'
+            hdu.header['ARRAYX'] = array.arrxyz[0], 'Array center x coordinate (m)'
+            hdu.header['ARRAYY'] = array.arrxyz[1], 'Array center y coordinate (m)'
+            hdu.header['ARRAYZ'] = array.arrxyz[2], 'Array center z coordinate (m)'
             hdulist.append(hdu)
                         
         if self.vis.size:
@@ -1037,7 +1076,7 @@ class oifits:
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
 
-                hdu = pyfits.new_table(pyfits.ColDefs([
+                hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs([
                     pyfits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
                     pyfits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
                     pyfits.Column(name='MJD', unit='DAY', format='1D', array=data['mjd']),
@@ -1059,11 +1098,11 @@ class oifits:
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header.update('EXTNAME', 'OI_VIS')
-                hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
-                hdu.header.update('DATE-OBS', refdate.strftime('%F'), comment='Zero-point for table (UTC)')
-                if key[0]: hdu.header.update('ARRNAME', key[0], 'Identifies corresponding OI_ARRAY')
-                hdu.header.update('INSNAME', key[1], 'Identifies corresponding OI_WAVELENGTH table')
+                hdu.header['EXTNAME'] = 'OI_VIS'
+                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
 
         if self.vis2.size:
@@ -1108,7 +1147,7 @@ class oifits:
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
 
-                hdu = pyfits.new_table(pyfits.ColDefs([
+                hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs([
                     pyfits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
                     pyfits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
                     pyfits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
@@ -1125,11 +1164,11 @@ class oifits:
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header.update('EXTNAME', 'OI_VIS2')
-                hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
-                hdu.header.update('DATE-OBS', refdate.strftime('%F'), comment='Zero-point for table (UTC)')
-                if key[0]: hdu.header.update('ARRNAME', key[0], 'Identifies corresponding OI_ARRAY')
-                hdu.header.update('INSNAME', key[1], 'Identifies corresponding OI_WAVELENGTH table')
+                hdu.header['EXTNAME'] = 'OI_VIS2'
+                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
 
         if self.t3.size:
@@ -1181,7 +1220,7 @@ class oifits:
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
 
-                hdu = pyfits.new_table(pyfits.ColDefs((
+                hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs((
                     pyfits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
                     pyfits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
                     pyfits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
@@ -1202,11 +1241,11 @@ class oifits:
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header.update('EXTNAME', 'OI_T3')
-                hdu.header.update('OI_REVN', 1, 'Revision number of the table definition')
-                hdu.header.update('DATE-OBS', refdate.strftime('%F'), 'Zero-point for table (UTC)')
-                if key[0]: hdu.header.update('ARRNAME', key[0], 'Identifies corresponding OI_ARRAY')
-                hdu.header.update('INSNAME', key[1], 'Identifies corresponding OI_WAVELENGTH table')
+                hdu.header['EXTNAME'] = 'OI_T3'
+                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
 
         hdulist.writeto(filename, clobber=True)
@@ -1223,12 +1262,15 @@ def open(filename, quiet=False):
     if not quiet:
         print "Opening %s"%filename
     hdulist = pyfits.open(filename)
+    # Save the primary header
+    newobj.header = hdulist[0].header.copy()
+
     # First get all the OI_TARGET, OI_WAVELENGTH and OI_ARRAY tables
     for hdu in hdulist:
         header = hdu.header
         data = hdu.data
         if hdu.name == 'OI_WAVELENGTH':
-            if newobj.wavelength == None: newobj.wavelength = {}
+            if type(newobj.wavelength) == type(None): newobj.wavelength = {}
             insname = header['INSNAME']
             newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'))
         elif hdu.name == 'OI_TARGET':
@@ -1243,7 +1285,7 @@ def open(filename, quiet=False):
                 newobj.target = np.append(newobj.target, target)
                 targetmap[target_id] = target
         elif hdu.name == 'OI_ARRAY':
-            if newobj.array == None: newobj.array = {}
+            if type(newobj.array) == type(None): newobj.array = {}
             arrname = header['ARRNAME']
             frame = header['FRAME']
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
