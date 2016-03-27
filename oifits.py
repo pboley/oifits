@@ -82,8 +82,8 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@urfu.ru"
-__date__ ='10 March 2016'
-__version__ = '0.3.3'
+__date__ ='27 March 2016'
+__version__ = '0.3.4'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -491,8 +491,7 @@ class OI_ARRAY:
         self.station = np.empty(0)
         for station in stations:
             tel_name, sta_name, sta_index, diameter, staxyz = station
-            # Remove whitespace from the station names, which pyfits may leave
-            self.station = np.append(self.station, OI_STATION(tel_name=tel_name.strip(), sta_name=sta_name.strip(), diameter=diameter, staxyz=staxyz))
+            self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz))
 
     def __eq__(self, other):
 
@@ -1269,6 +1268,13 @@ def open(filename, quiet=False):
     for hdu in hdulist:
         header = hdu.header
         data = hdu.data
+        # PyFITS 2.4 had a bug where strings in binary tables were padded with
+        # spaces instead of nulls.  This was fixed in PyFITS 3.0.0, but many files
+        # suffer from this problem, and the strings are ugly as a result.  Fix it.
+        if type(hdu) == pyfits.hdu.table.BinTableHDU:
+            for name in data.names:
+                if data.dtype[name].type == np.string_:
+                    data[name] = map(str.rstrip, data[name])
         if hdu.name == 'OI_WAVELENGTH':
             if type(newobj.wavelength) == type(None): newobj.wavelength = {}
             insname = header['INSNAME']
