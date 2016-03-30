@@ -83,7 +83,7 @@ import warnings
 __author__ = "Paul Boley"
 __email__ = "pboley@urfu.ru"
 __date__ ='27 March 2016'
-__version__ = '0.3.4'
+__version__ = '0.3.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -153,7 +153,7 @@ class _angpoint(float):
         except TypeError:
             return self.__repr__()
 
-class OI_TARGET:
+class OI_TARGET(object):
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
                  sysvel=0.0, veltyp='TOPCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
@@ -206,7 +206,7 @@ class OI_TARGET:
     def info(self):
         print str(self)
 
-class OI_WAVELENGTH:
+class OI_WAVELENGTH(object):
 
     def __init__(self, eff_wave, eff_band=None):
         self.eff_wave = np.array(eff_wave, dtype=double).reshape(-1)
@@ -232,7 +232,7 @@ class OI_WAVELENGTH:
         print str(self)
 
 
-class OI_VIS:
+class OI_VIS(object):
     """
     Class for storing visibility amplitude and differential phase data.
     To access the data, use the following hidden attributes:
@@ -313,7 +313,7 @@ class OI_VIS:
     def info(self):
         print str(self)
 
-class OI_VIS2:
+class OI_VIS2(object):
     """
     Class for storing squared visibility amplitude data.
     To access the data, use the following hidden attributes:
@@ -380,7 +380,7 @@ class OI_VIS2:
         print str(self)
 
 
-class OI_T3:
+class OI_T3(object):
     """
     Class for storing triple product and closure phase data.
     To access the data, use the following hidden attributes:
@@ -455,7 +455,7 @@ class OI_T3:
     def info(self):
         print str(self)
 
-class OI_STATION:
+class OI_STATION(object):
     """ This class corresponds to a single row (i.e. single
     station/telescope) of an OI_ARRAY table."""
 
@@ -481,7 +481,7 @@ class OI_STATION:
     def __repr__(self):
         return '%s/%s (%g m)'%(self.sta_name, self.tel_name, self.diameter)
 
-class OI_ARRAY:
+class OI_ARRAY(object):
     """Contains all the data for a single OI_ARRAY table.  Note the
     hidden convenience attributes latitude, longitude, and altitude."""
 
@@ -546,7 +546,7 @@ class OI_ARRAY:
 
         raise LookupError('No such station %s'%name)
 
-class oifits:
+class oifits(object):
     
     def __init__(self):
 
