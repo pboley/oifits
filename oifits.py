@@ -204,7 +204,7 @@ class OI_TARGET(object):
         return "%s: %s %s (%g)"%(self.target, self.raep0.ashms(), self.decep0.asdms(), self.equinox)
 
     def info(self):
-        print str(self)
+        print(str(self))
 
 class OI_WAVELENGTH(object):
 
@@ -229,7 +229,7 @@ class OI_WAVELENGTH(object):
         return "%d wavelength%s (%.3g-%.3g um)"%(len(self.eff_wave), _plurals(len(self.eff_wave)), 1e6*np.min(self.eff_wave),1e6*np.max(self.eff_wave))
 
     def info(self):
-        print str(self)
+        print(str(self))
 
 
 class OI_VIS(object):
@@ -311,7 +311,7 @@ class OI_VIS(object):
         return '%s %s%s: %d point%s (%d masked), B = %5.1f m, PA = %5.1f deg, <V> = %4.2g'%(self.target.target, self.timeobs.strftime('%F %T'), baselinename, len(self.visamp), _plurals(len(self.visamp)), np.sum(self.flag), np.sqrt(self.ucoord**2 + self.vcoord**2), np.arctan(self.ucoord / self.vcoord) * 180.0 / np.pi % 180.0, meanvis)
 
     def info(self):
-        print str(self)
+        print(str(self))
 
 class OI_VIS2(object):
     """
@@ -377,7 +377,7 @@ class OI_VIS2(object):
         return "%s %s%s: %d point%s (%d masked), B = %5.1f m, PA = %5.1f deg, <V^2> = %4.2g"%(self.target.target, self.timeobs.strftime('%F %T'), baselinename, len(self.vis2data), _plurals(len(self.vis2data)), np.sum(self.flag), np.sqrt(self.ucoord**2 + self.vcoord**2), np.arctan(self.ucoord / self.vcoord) * 180.0 / np.pi % 180.0, meanvis)
 
     def info(self):
-        print str(self)
+        print(str(self))
 
 
 class OI_T3(object):
@@ -453,7 +453,7 @@ class OI_T3(object):
         return "%s %s%s: %d point%s (%d masked), B = %5.1fm, %5.1fm, <T3> = %4.2g"%(self.target.target, self.timeobs.strftime('%F %T'), baselinename, len(self.t3amp), _plurals(len(self.t3amp)), np.sum(self.flag), np.sqrt(self.u1coord**2 + self.v1coord**2), np.sqrt(self.u2coord**2 + self.v2coord**2), meant3)
 
     def info(self):
-        print str(self)
+        print(str(self))
 
 class OI_STATION(object):
     """ This class corresponds to a single row (i.e. single
@@ -533,10 +533,10 @@ class OI_ARRAY(object):
     def info(self, verbose=0):
         """Print the array's center coordinates.  If verbosity >= 1,
         print information about each station."""
-        print str(self)
+        print(str(self))
         if verbose >= 1:
             for station in self.station:
-                print "   %s"%str(station)
+                print("   %s"%str(station))
         
     def get_station_by_name(self, name):
 
@@ -600,7 +600,7 @@ class oifits(object):
                         targetmap[id(otarget)] = ntarget
                         break
                     elif ntarget.target == otarget.target:
-                        print 'Found a target with a matching name, but some differences in the target specification.  Creating a new target.  Set oifits.matchtargetbyname to True to override this behavior.'
+                        print('Found a target with a matching name, but some differences in the target specification.  Creating a new target.  Set oifits.matchtargetbyname to True to override this behavior.')
                 # If 'id(otarget)' is not in targetmap, then this is a new
                 # target and should be added to the array of targets
                 if id(otarget) not in targetmap.keys():
@@ -739,13 +739,13 @@ class oifits(object):
                 errors.append("Data size mismatch for visibility measurement 0x%x (wavelength table has a length of %d)"%(id(vis), nwave))
 
         if warnings:
-            print "*** %d warning%s:"%(len(warnings), _plurals(len(warnings)))
+            print("*** %d warning%s:"%(len(warnings), _plurals(len(warnings))))
             for warning in warnings:
-                print '  ' + warning
+                print('  ' + warning)
         if errors:
-            print "*** %d ERROR%s:"%(len(errors), _plurals(len(errors)).upper())
+            print("*** %d ERROR%s:"%(len(errors), _plurals(len(errors)).upper()))
             for error in errors:
-                print '  ' + error
+                print('  ' + error)
 
         return not (len(warnings) or len(errors))
 
@@ -759,48 +759,48 @@ class oifits(object):
 
         for vis in self.vis:
             if vis.array and (vis.array not in self.array.values()):
-                print 'A visibility measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(vis)
+                print('A visibility measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(vis))
                 return False
             if ((vis.station[0] and (vis.station[0] not in vis.array.station)) or
                 (vis.station[1] and (vis.station[1] not in vis.array.station))):
-                print 'A visibility measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(vis)
+                print('A visibility measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(vis))
                 return False
             if vis.wavelength not in self.wavelength.values():
-                print 'A visibility measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis)
+                print('A visibility measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis))
                 return False
             if vis.target not in self.target:
-                print 'A visibility measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis)
+                print('A visibility measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis))
                 return False
 
         for vis2 in self.vis2:
             if vis2.array and (vis2.array not in self.array.values()):
-                print 'A visibility^2 measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(vis2)
+                print('A visibility^2 measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(vis2))
                 return False
             if ((vis2.station[0] and (vis2.station[0] not in vis2.array.station)) or
                 (vis2.station[1] and (vis2.station[1] not in vis2.array.station))):
-                print 'A visibility^2 measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(vis)
+                print('A visibility^2 measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(vis))
                 return False
             if vis2.wavelength not in self.wavelength.values():
-                print 'A visibility^2 measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis2)
+                print('A visibility^2 measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis2))
                 return False
             if vis2.target not in self.target:
-                print 'A visibility^2 measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis2)
+                print('A visibility^2 measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis2))
                 return False
 
         for t3 in self.t3:
             if t3.array and (t3.array not in self.array.values()):
-                print 'A closure phase measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(t3)
+                print('A closure phase measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(t3))
                 return False
             if ((t3.station[0] and (t3.station[0] not in t3.array.station)) or
                 (t3.station[1] and (t3.station[1] not in t3.array.station)) or
                 (t3.station[2] and (t3.station[2] not in t3.array.station))):
-                print 'A closure phase measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(t3)
+                print('A closure phase measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(t3))
                 return False
             if t3.wavelength not in self.wavelength.values():
-                print 'A closure phase measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(t3)
+                print('A closure phase measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(t3))
                 return False
             if t3.target not in self.target:
-                print 'A closure phase measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(t3)
+                print('A closure phase measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(t3))
                 return False
                     
         return True
@@ -814,57 +814,57 @@ class oifits(object):
         if self.wavelength:
             wavelengths = 0
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF WAVELENGTH TABLES"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF WAVELENGTH TABLES")
+                print("====================================================================")
             for key in self.wavelength.keys():
                 wavelengths += len(self.wavelength[key].eff_wave)
-                if recursive: print "'%s': %s"%(key, str(self.wavelength[key]))
-            print "%d wavelength table%s with %d wavelength%s in total"%(len(self.wavelength), _plurals(len(self.wavelength)), wavelengths, _plurals(wavelengths))
+                if recursive: print("'%s': %s"%(key, str(self.wavelength[key])))
+            print("%d wavelength table%s with %d wavelength%s in total"%(len(self.wavelength), _plurals(len(self.wavelength)), wavelengths, _plurals(wavelengths)))
         if self.target.size:
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF TARGET TABLES"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF TARGET TABLES")
+                print("====================================================================")
                 for target in self.target:
                     target.info()
-            print "%d target%s"%(len(self.target), _plurals(len(self.target)))
+            print("%d target%s"%(len(self.target), _plurals(len(self.target))))
         if self.array:
             stations = 0
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF ARRAY TABLES"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF ARRAY TABLES")
+                print("====================================================================")
             for key in self.array.keys():
                 if recursive:
-                    print key + ':'
+                    print(key + ':')
                     self.array[key].info(verbose=verbose)
                 stations += len(self.array[key].station)
-            print "%d array%s with %d station%s"%(len(self.array), _plurals(len(self.array)), stations, _plurals(stations))
+            print("%d array%s with %d station%s"%(len(self.array), _plurals(len(self.array)), stations, _plurals(stations)))
         if self.vis.size:
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF VISIBILITY MEASUREMENTS"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF VISIBILITY MEASUREMENTS")
+                print("====================================================================")
                 for vis in self.vis:
                     vis.info()
-            print "%d visibility measurement%s"%(len(self.vis), _plurals(len(self.vis)))
+            print("%d visibility measurement%s"%(len(self.vis), _plurals(len(self.vis))))
         if self.vis2.size:
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF VISIBILITY^2 MEASUREMENTS"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF VISIBILITY^2 MEASUREMENTS")
+                print("====================================================================")
                 for vis2 in self.vis2:
                     vis2.info()
-            print "%d visibility^2 measurement%s"%(len(self.vis2), _plurals(len(self.vis2)))
+            print("%d visibility^2 measurement%s"%(len(self.vis2), _plurals(len(self.vis2))))
         if self.t3.size:
             if recursive:
-                print "===================================================================="
-                print "SUMMARY OF T3 MEASUREMENTS"
-                print "===================================================================="
+                print("====================================================================")
+                print("SUMMARY OF T3 MEASUREMENTS")
+                print("====================================================================")
                 for t3 in self.t3:
                     t3.info()
-            print "%d closure phase measurement%s"%(len(self.t3), _plurals(len(self.t3)))
+            print("%d closure phase measurement%s"%(len(self.t3), _plurals(len(self.t3))))
 
     def save(self, filename):
         """Write the contents of the oifits object to a file in OIFITS
@@ -1259,7 +1259,7 @@ def open(filename, quiet=False):
     sta_indices = {}
     
     if not quiet:
-        print "Opening %s"%filename
+        print("Opening %s"%filename)
     hdulist = pyfits.open(filename)
     # Save the primary header
     newobj.header = hdulist[0].header.copy()
