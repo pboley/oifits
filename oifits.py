@@ -1039,11 +1039,11 @@ class oifits(object):
                     data['visphi'].append(vis.visphi[0])
                     data['visphierr'].append(vis.visphierr[0])
                     data['flag'].append(vis.flag[0])
-                    if vis.cflux != None:
+                    if type(vis.cflux) != type(None):
                         data['cflux'].append(vis.cflux[0])
                     else:
                         data['cflux'].append(None)
-                    if vis.cfluxerr != None:
+                    if type(vis.cfluxerr) != type(None):
                         data['cfluxerr'].append(vis.cfluxerr[0])
                     else:
                         data['cfluxerr'].append(None)
@@ -1053,13 +1053,13 @@ class oifits(object):
                     data['visphi'].append(vis.visphi)
                     data['visphierr'].append(vis.visphierr)
                     data['flag'].append(vis.flag)
-                    if vis.cflux != None:
+                    if type(vis.cflux) != type(None):
                         data['cflux'].append(vis.cflux)
                     else:
                         cflux=np.empty(nwave)
                         cflux[:]=None
                         data['cflux'].append(cflux)
-                    if vis.cfluxerr != None:
+                    if type(vis.cfluxerr) != type(None):
                         data['cfluxerr'].append(vis.cfluxerr)
                     else:
                         cfluxerr=np.empty(nwave)
