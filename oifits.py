@@ -153,6 +153,18 @@ class _angpoint(float):
         except TypeError:
             return self.__repr__()
 
+def _isnone(x):
+    """Convenience hack for checking if x is none; needed because numpy
+    arrays will, at some point, return arrays for x == None."""
+
+    return type(x) == type(None)
+
+def _notnone(x):
+    """Convenience hack for checking if x is not none; needed because numpy
+    arrays will, at some point, return arrays for x != None."""
+
+    return type(x) != type(None)
+
 class OI_TARGET(object):
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
@@ -210,7 +222,7 @@ class OI_WAVELENGTH(object):
 
     def __init__(self, eff_wave, eff_band=None):
         self.eff_wave = np.array(eff_wave, dtype=double).reshape(-1)
-        if type(eff_band) == type(None):
+        if _isnone(eff_band):
             eff_band = np.zeros_like(eff_wave)
         self.eff_band = np.array(eff_band, dtype=double).reshape(-1)
 
@@ -253,9 +265,9 @@ class OI_VIS(object):
         self._visamperr = np.array(visamperr, dtype=double).reshape(-1)
         self._visphi = np.array(visphi, dtype=double).reshape(-1)
         self._visphierr = np.array(visphierr, dtype=double).reshape(-1)
-        if type(cflux) != type(None): self._cflux = np.array(cflux, dtype=double).reshape(-1)
+        if _notnone(cflux): self._cflux = np.array(cflux, dtype=double).reshape(-1)
         else: self._cflux = None
-        if type(cfluxerr) != type(None): self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
+        if _notnone(cfluxerr): self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
         else: self._cfluxerr = None
         self.flag = np.array(flag, dtype=bool).reshape(-1)
         self.ucoord = ucoord
@@ -289,7 +301,7 @@ class OI_VIS(object):
         if attrname in ('visamp', 'visamperr', 'visphi', 'visphierr'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
         elif attrname in ('cflux', 'cfluxerr'):
-            if type(self.__dict__['_' + attrname]) != type(None):
+            if _notnone(self.__dict__['_' + attrname]):
                 return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
             else:
                 return None
@@ -1039,11 +1051,11 @@ class oifits(object):
                     data['visphi'].append(vis.visphi[0])
                     data['visphierr'].append(vis.visphierr[0])
                     data['flag'].append(vis.flag[0])
-                    if type(vis.cflux) != type(None):
+                    if _notnone(vis.cflux):
                         data['cflux'].append(vis.cflux[0])
                     else:
                         data['cflux'].append(None)
-                    if type(vis.cfluxerr) != type(None):
+                    if _notnone(vis.cfluxerr):
                         data['cfluxerr'].append(vis.cfluxerr[0])
                     else:
                         data['cfluxerr'].append(None)
@@ -1053,13 +1065,13 @@ class oifits(object):
                     data['visphi'].append(vis.visphi)
                     data['visphierr'].append(vis.visphierr)
                     data['flag'].append(vis.flag)
-                    if type(vis.cflux) != type(None):
+                    if _notnone(vis.cflux):
                         data['cflux'].append(vis.cflux)
                     else:
                         cflux=np.empty(nwave)
                         cflux[:]=None
                         data['cflux'].append(cflux)
-                    if type(vis.cfluxerr) != type(None):
+                    if _notnone(vis.cfluxerr):
                         data['cfluxerr'].append(vis.cfluxerr)
                     else:
                         cfluxerr=np.empty(nwave)
@@ -1276,7 +1288,7 @@ def open(filename, quiet=False):
                 if data.dtype[name].type == np.string_:
                     data[name] = map(str.rstrip, data[name])
         if hdu.name == 'OI_WAVELENGTH':
-            if type(newobj.wavelength) == type(None): newobj.wavelength = {}
+            if _isnone(newobj.wavelength): newobj.wavelength = {}
             insname = header['INSNAME']
             newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'))
         elif hdu.name == 'OI_TARGET':
@@ -1291,7 +1303,7 @@ def open(filename, quiet=False):
                 newobj.target = np.append(newobj.target, target)
                 targetmap[target_id] = target
         elif hdu.name == 'OI_ARRAY':
-            if type(newobj.array) == type(None): newobj.array = {}
+            if _isnone(newobj.array): newobj.array = {}
             arrname = header['ARRNAME']
             frame = header['FRAME']
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
