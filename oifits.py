@@ -1288,7 +1288,6 @@ def open(filename, quiet=False):
                 if data.dtype[name].type == np.string_:
                     data[name] = map(str.rstrip, data[name])
         if hdu.name == 'OI_WAVELENGTH':
-            if _isnone(newobj.wavelength): newobj.wavelength = {}
             insname = header['INSNAME']
             newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'))
         elif hdu.name == 'OI_TARGET':
