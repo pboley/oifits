@@ -1302,7 +1302,6 @@ def open(filename, quiet=False):
                 newobj.target = np.append(newobj.target, target)
                 targetmap[target_id] = target
         elif hdu.name == 'OI_ARRAY':
-            if _isnone(newobj.array): newobj.array = {}
             arrname = header['ARRNAME']
             frame = header['FRAME']
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
