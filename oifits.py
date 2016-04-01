@@ -1316,7 +1316,7 @@ def open(filename, quiet=False):
         data = hdu.data
         if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3'):
             arrname = header.get('ARRNAME')
-            array = newobj.array[arrname]
+            array = newobj.array.get(arrname)
             wavelength = newobj.wavelength[header['INSNAME']]
         if hdu.name == 'OI_VIS':
             for row in data:
