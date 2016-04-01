@@ -1315,10 +1315,7 @@ def open(filename, quiet=False):
         header = hdu.header
         data = hdu.data
         if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3'):
-            if 'ARRNAME' in header.keys():
-                arrname = header['ARRNAME']
-            else:
-                arrname = None
+            arrname = header.get('ARRNAME')
             if arrname and newobj.array:
                 array = newobj.array[arrname]
             else:
