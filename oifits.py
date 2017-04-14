@@ -1286,7 +1286,7 @@ def open(filename, quiet=False):
         if type(hdu) == pyfits.hdu.table.BinTableHDU:
             for name in data.names:
                 if data.dtype[name].type == np.string_:
-                    data[name] = map(str.rstrip, data[name])
+                    data[name] = list(map(str.rstrip, data[name]))
         if hdu.name == 'OI_WAVELENGTH':
             insname = header['INSNAME']
             newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'))
