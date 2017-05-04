@@ -82,7 +82,7 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@urfu.ru"
-__date__ ='14 April 2017'
+__date__ ='4 May 2017'
 __version__ = '0.3.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
@@ -627,7 +627,7 @@ class oifits(object):
         if len(other.array):
             stationmap = {}
             arraymap = {}
-            for key, otharray in other.array.iteritems():
+            for key, otharray in other.array.items():
                 arraymap[id(otharray)] = key
                 if key not in new.array.keys():
                     new.array[key] = copy.deepcopy(other.array[key])
@@ -910,7 +910,7 @@ class oifits(object):
 
         wavelengthmap = {}
         hdulist.append(hdu)
-        for insname, wavelength in self.wavelength.iteritems():
+        for insname, wavelength in self.wavelength.items():
             wavelengthmap[id(wavelength)] = insname
             hdu = pyfits.BinTableHDU.from_columns(pyfits.ColDefs((
                 pyfits.Column(name='EFF_WAVE', format='1E', unit='METERS', array=wavelength.eff_wave),
@@ -986,7 +986,7 @@ class oifits(object):
 
         arraymap = {}
         stationmap = {}
-        for arrname, array in self.array.iteritems():
+        for arrname, array in self.array.items():
             arraymap[id(array)] = arrname
             tel_name = []
             sta_name = []
