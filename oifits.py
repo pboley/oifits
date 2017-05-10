@@ -82,7 +82,7 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@urfu.ru"
-__date__ ='4 May 2017'
+__date__ ='10 May 2017'
 __version__ = '0.3.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
@@ -528,13 +528,22 @@ class OI_ARRAY(object):
     def __getattr__(self, attrname):
         if attrname == 'latitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            if radius == 0.0:
+                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
+                return _angpoint(np.nan)
             return _angpoint(np.arcsin(self.arrxyz[2]/radius)*180.0/np.pi)
         elif attrname == 'longitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            if radius == 0.0:
+                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
+                return _angpoint(np.nan)
             xylen = np.sqrt(self.arrxyz[0]**2+self.arrxyz[1]**2)
             return _angpoint(np.arcsin(self.arrxyz[1]/xylen)*180.0/np.pi)
         elif attrname == 'altitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            if radius == 0.0:
+                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
+                return _angpoint(np.nan)
             return radius - 6378100.0  
         else:
             raise AttributeError(attrname)
