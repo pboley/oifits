@@ -124,6 +124,8 @@ class _angpoint(float):
         """Return the value as a string in dms format,
         e.g. +25:30:22.55.  Useful for declination."""
         angle = self.angle
+        if not np.isfinite(angle):
+            return self.__repr__()
         if angle < 0:
             negative = True
             angle *= -1.0
@@ -132,26 +134,21 @@ class _angpoint(float):
         degrees = np.floor(angle)
         minutes = np.floor((angle - degrees)*60.0)
         seconds = (angle - degrees - minutes/60.0)*3600.0
-        try:
-            if negative:
-                return "-%02d:%02d:%05.2f"%(degrees,minutes,seconds)
-            else:
-                return "+%02d:%02d:%05.2f"%(degrees,minutes,seconds)
-        except TypeError:
-            return self.__repr__()
+        if negative:
+            return "-%02d:%02d:%05.2f"%(degrees,minutes,seconds)
+        else:
+            return "+%02d:%02d:%05.2f"%(degrees,minutes,seconds)
 
     def ashms(self):
         """Return the value as a string in hms format,
         e.g. 5:12:17.21.  Useful for right ascension."""
         angle = self.angle*24.0/360.0
-
+        if not np.isfinite(angle):
+            return self.__repr__()
         hours = np.floor(angle)
         minutes = np.floor((angle - hours)*60.0)
         seconds = (angle - hours - minutes/60.0)*3600.0
-        try:
-            return "%02d:%02d:%05.2f"%(hours,minutes,seconds)
-        except TypeError:
-            return self.__repr__()
+        return "%02d:%02d:%05.2f"%(hours,minutes,seconds)
 
 def _isnone(x):
     """Convenience hack for checking if x is none; needed because numpy
