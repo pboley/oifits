@@ -82,7 +82,7 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@urfu.ru"
-__date__ ='10 May 2017'
+__date__ ='12 May 2017'
 __version__ = '0.3.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
