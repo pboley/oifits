@@ -81,8 +81,8 @@ import copy
 import warnings
 
 __author__ = "Paul Boley"
-__email__ = "pboley@urfu.ru"
-__date__ ='12 May 2017'
+__email__ = "pboley@gmail.com"
+__date__ ='3 August 2019'
 __version__ = '0.3.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
@@ -499,7 +499,7 @@ class OI_ARRAY(object):
         self.arrxyz = arrxyz
         self.station = np.empty(0)
         for station in stations:
-            tel_name, sta_name, sta_index, diameter, staxyz = station
+            tel_name, sta_name, sta_index, diameter, staxyz = station['tel_name'], station['sta_name'], station['sta_index'], station['diameter'], station['staxyz']
             self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz))
 
     def __eq__(self, other):
