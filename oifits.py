@@ -270,9 +270,12 @@ class OI_VIS(object):
     """
 
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
-                 vcoord, wavelength, target, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1):
+                 vcoord, wavelength, target, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
+                 # The follow arguments are used for OIFITS2
+                 amptyp=None, phityp=None, amporder=None, phiorder=None,
+                 visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None):
 
-        if revision > 1:
+        if revision > 2:
             warnings.warn('OI_VIS revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
@@ -293,12 +296,23 @@ class OI_VIS(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
+        if revision >= 2:
+            self.amptyp = amptyp
+            self.phityp = phityp
+            self.amporder = amporder
+            self.phiorder = phiorder
+            self.visrefmap = visrefmap
+            self.rvis = rvis
+            self.rviserr = rviserr
+            self.ivis = ivis
+            self.iviserr = iviserr
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
-        return not (
+        # Test equality for OIFITS1
+        eq = not (
             (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
@@ -314,6 +328,20 @@ class OI_VIS(object):
             (not _array_eq(self.visphi, other.visphi)) or
             (not _array_eq(self.visphierr, other.visphierr)) or
             (not _array_eq(self.flag, other.flag)))
+        # Additional checks for OIFITS2
+        if self.revision >= 2:
+            eq = eq and not (
+                (self.amptyp     != other.amptyp)    or
+                (self.phityp     != other.phityp)    or
+                (self.amporder   != other.amporder)  or
+                (self.phiorder   != other.phiorder)  or
+                (not _array_eq(self.visrefmap, other.visrefmap)) or
+                (not _array_eq(self.rvis, other.rvis))           or
+                (not _array_eq(self.rviserr, other.rviserr))     or
+                (not _array_eq(self.ivis, other.ivis))           or
+                (not _array_eq(self.iviserr, other.iviserr)))
+
+        return eq
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -1411,6 +1439,13 @@ def open(filename, quiet=False):
             else:
                 date = header['DATE-OBS'].split('-')
         if hdu.name == 'OI_VIS':
+            # OIFITS2 parameters which default to None for OIFITS1
+            amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = None
+            if revision >= 2:
+                amptyp = header.get('AMPTYP')
+                phityp = header.get('PHITYP')
+                amporder = header.get('AMPORDER')
+                phiorder = header.get('PHIORDER')
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row.field('INT_TIME')
@@ -1433,11 +1468,26 @@ def open(filename, quiet=False):
                     station = [s1, s2]
                 else:
                     station = [None, None]
+                # Optional OIFITS2 values
+                if revision >= 2:
+                    if 'VISREFMAP' in data.names:
+                        visrefmap = row['VISREFMAP']
+                    if 'RVIS' in data.names:
+                        rvis = row['RVIS']
+                    if 'RVISERR' in data.names:
+                        rviserr = row['RVISERR']
+                    if 'IVIS' in data.names:
+                        ivis = row['IVIS']
+                    if 'IVISERR' in data.names:
+                        iviserr = row['IVISERR']
                 newobj.vis = np.append(newobj.vis, OI_VIS(timeobs=timeobs, int_time=int_time, visamp=visamp,
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
                                                           flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength,
                                                           target=target, array=array, station=station, cflux=cflux,
-                                                          cfluxerr=cfluxerr, revision=revision))
+                                                          cfluxerr=cfluxerr, revision=revision,
+                                                          amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
+                                                          visrefmap=visrefmap,
+                                                          rvis=rvis, rviserr=rviserr, ivis=ivis, iviserr=iviserr))
         elif hdu.name == 'OI_VIS2':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
