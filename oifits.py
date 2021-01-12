@@ -231,9 +231,10 @@ class OI_WAVELENGTH(object):
 
     def __init__(self, eff_wave, eff_band=None, revision=1):
 
-        if revision > 1:
+        if revision > 2:
             warnings.warn('OI_WAVELENGTH revision %d not implemented yet'%revision, UserWarning)
 
+        self.revision = revision
         self.eff_wave = np.array(eff_wave, dtype=double).reshape(-1)
         if _isnone(eff_band):
             eff_band = np.zeros_like(eff_wave)
