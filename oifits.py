@@ -302,14 +302,10 @@ class OI_VIS(object):
             self.amporder = amporder
             self.phiorder = phiorder
             self.visrefmap = visrefmap
-            if _notnone(rvis): self._rvis = np.array(rvis, dtype=double).reshape(-1)
-            else: self._rvis = None
-            if _notnone(rviserr): self._rviserr = np.array(rviserr, dtype=double).reshape(-1)
-            else: self._rviserr = None
-            if _notnone(ivis): self._ivis = np.array(ivis, dtype=double).reshape(-1)
-            else: self._ivis = None
-            if _notnone(iviserr): self._iviserr = np.array(iviserr, dtype=double).reshape(-1)
-            else: self._iviserr = None
+            self.rvis = rvis
+            self.rviserr = rviserr
+            self.ivis = ivis
+            self.iviserr = iviserr
 
     def __eq__(self, other):
 
@@ -340,10 +336,10 @@ class OI_VIS(object):
                 (self.amporder   != other.amporder)  or
                 (self.phiorder   != other.phiorder)  or
                 (not _array_eq(self.visrefmap, other.visrefmap)) or
-                (not _array_eq(self._rvis, other._rvis))           or
-                (not _array_eq(self._rviserr, other._rviserr))     or
-                (not _array_eq(self._ivis, other._ivis))           or
-                (not _array_eq(self._iviserr, other._iviserr)))
+                (not _array_eq(self.rvis, other.rvis))           or
+                (not _array_eq(self.rviserr, other.rviserr))     or
+                (not _array_eq(self.ivis, other.ivis))           or
+                (not _array_eq(self.iviserr, other.iviserr)))
 
         return eq
 
@@ -354,7 +350,7 @@ class OI_VIS(object):
         if attrname in ('visamp', 'visamperr', 'visphi', 'visphierr'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
         # Optional data arrays which may not be present, and should return None if they aren't
-        elif attrname in ('cflux', 'cfluxerr', 'rvis', 'rviserr', 'ivis', 'iviserr'):
+        elif attrname in ('cflux', 'cfluxerr'):
             if _notnone(self.__dict__['_' + attrname]):
                 return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
             else:
