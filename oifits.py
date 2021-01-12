@@ -82,8 +82,8 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='3 August 2019'
-__version__ = '0.3.5-dev'
+__date__ ='12 January 2021'
+__version__ = '0.4-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -166,7 +166,12 @@ class OI_TARGET(object):
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
                  sysvel=0.0, veltyp='TOPCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
-                 pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN'):
+                 pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN', category=None, revision=1):
+
+        if revision > 2:
+            warnings.warn('OI_TARGET revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.target = target
         self.raep0 = _angpoint(raep0)
         self.decep0 = _angpoint(decep0)
@@ -183,12 +188,17 @@ class OI_TARGET(object):
         self.parallax = parallax
         self.para_err = para_err
         self.spectyp = spectyp
+        if revision >= 2:
+            self.category = category
+        else: self.category = None
+
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
         return not (
+            (self.revision  != other.revision)  or
             (self.target    != other.target)    or
             (self.raep0     != other.raep0)     or
             (self.decep0    != other.decep0)    or
@@ -204,12 +214,14 @@ class OI_TARGET(object):
             (self.pmdec_err != other.pmdec_err) or
             (self.parallax  != other.parallax)  or
             (self.para_err  != other.para_err)  or
-            (self.spectyp   != other.spectyp))
+            (self.spectyp   != other.spectyp)   or
+            (self.category  != other.category))
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __str__(self):
+        #FIXME - Add category for OIFITS2
         return "%s: %s %s (%g)"%(self.target, self.raep0.ashms(), self.decep0.asdms(), self.equinox)
 
     def info(self):
@@ -217,7 +229,11 @@ class OI_TARGET(object):
 
 class OI_WAVELENGTH(object):
 
-    def __init__(self, eff_wave, eff_band=None):
+    def __init__(self, eff_wave, eff_band=None, revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_WAVELENGTH revision %d not implemented yet'%revision, UserWarning)
+
         self.eff_wave = np.array(eff_wave, dtype=double).reshape(-1)
         if _isnone(eff_band):
             eff_band = np.zeros_like(eff_wave)
@@ -228,6 +244,7 @@ class OI_WAVELENGTH(object):
         if type(self) != type(other): return False
 
         return not (
+            (self.revision != other.revision)              or
             (not _array_eq(self.eff_wave, other.eff_wave)) or
             (not _array_eq(self.eff_band, other.eff_band)))
 
@@ -252,7 +269,12 @@ class OI_VIS(object):
     """
 
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
-                 vcoord, wavelength, target, array=None, station=(None,None), cflux=None, cfluxerr=None):
+                 vcoord, wavelength, target, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_VIS revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -276,6 +298,7 @@ class OI_VIS(object):
         if type(self) != type(other): return False
 
         return not (
+            (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -331,7 +354,12 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, array=None, station=(None, None)):
+                 target, array=None, station=(None, None), revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -349,6 +377,7 @@ class OI_VIS2(object):
         if type(self) != type(other): return False
 
         return not (
+            (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -399,7 +428,12 @@ class OI_T3(object):
     """
 
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
-                 v1coord, u2coord, v2coord, wavelength, target, array=None, station=(None,None,None)):
+                 v1coord, u2coord, v2coord, wavelength, target, array=None, station=(None,None,None), revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -421,6 +455,7 @@ class OI_T3(object):
         if type(self) != type(other): return False
 
         return not (
+            (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -468,45 +503,75 @@ class OI_STATION(object):
     """ This class corresponds to a single row (i.e. single
     station/telescope) of an OI_ARRAY table."""
 
-    def __init__(self, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None]):
+    def __init__(self, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None], fov=None, fovtype=None, revision=1):
+
+        if revision > 2:
+            warnings.warn('OI_ARRAY revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.tel_name = tel_name
         self.sta_name = sta_name
         self.diameter = diameter
         self.staxyz = staxyz
+
+        if revision >= 2:
+            self.fov = fov
+            self.fovtype = fovtype
+        else:
+            self.fov = self.fovtype = None
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
         return not (
+            (self.revision != other.revision) or
             (self.tel_name != other.tel_name) or
             (self.sta_name != other.sta_name) or
             (self.diameter != other.diameter) or
-            (not _array_eq(self.staxyz, other.staxyz)))
+            (not _array_eq(self.staxyz, other.staxyz)) or
+            (self.fov != other.fov) or
+            (self.fovtype != other.fovtype))
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return '%s/%s (%g m)'%(self.sta_name, self.tel_name, self.diameter)
+
+        if self.revision >= 2:
+            return '%s/%s (%g m, fov %g arcsec (%s))'%(self.sta_name, self.tel_name, self.diameter, self.fov, self.fovtype)
+        else:
+            return '%s/%s (%g m)'%(self.sta_name, self.tel_name, self.diameter)
 
 class OI_ARRAY(object):
     """Contains all the data for a single OI_ARRAY table.  Note the
     hidden convenience attributes latitude, longitude, and altitude."""
 
-    def __init__(self, frame, arrxyz, stations=()):
+    def __init__(self, frame, arrxyz, stations=(), revision=1):
+
+        if revision > 2:
+            warnings.warn('OI_ARRAY revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
         self.frame = frame
         self.arrxyz = arrxyz
         self.station = np.empty(0)
+        # fov/fovtype are not defined for OIFITS1; just pass them on to
+        # OI_STATION constructor as None for OIFITS1.
+        fov = fovtype = None
         for station in stations:
-            tel_name, sta_name, sta_index, diameter, staxyz = station['tel_name'], station['sta_name'], station['sta_index'], station['diameter'], station['staxyz']
-            self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz))
+            if revision >= 2:
+                tel_name, sta_name, sta_index, diameter, staxyz, fov, fovtype = station
+            else:
+                tel_name, sta_name, sta_index, diameter, staxyz = station
+            self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz, fov=fov, fovtype=fovtype, revision=revision))
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
         equal = not (
+            (self.revision != other.revision) or
             (self.frame   != other.frame)   or
             (not _array_eq(self.arrxyz, other.arrxyz)))
 
@@ -525,12 +590,14 @@ class OI_ARRAY(object):
     def __getattr__(self, attrname):
         if attrname == 'latitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            # FIXME -- radius can (and should) be 0 for SKY frame
             if radius == 0.0:
                 warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
                 return _angpoint(np.nan)
             return _angpoint(np.arcsin(self.arrxyz[2]/radius)*180.0/np.pi)
         elif attrname == 'longitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            # FIXME -- radius can (and should) be 0 for SKY frame
             if radius == 0.0:
                 warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
                 return _angpoint(np.nan)
@@ -538,6 +605,7 @@ class OI_ARRAY(object):
             return _angpoint(np.arcsin(self.arrxyz[1]/xylen)*180.0/np.pi)
         elif attrname == 'altitude':
             radius = np.sqrt((self.arrxyz**2).sum())
+            # FIXME -- radius can (and should) be 0 for SKY frame
             if radius == 0.0:
                 warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
                 return _angpoint(np.nan)
@@ -546,6 +614,7 @@ class OI_ARRAY(object):
             raise AttributeError(attrname)
 
     def __repr__(self):
+        # FIXME -- add frame
         return '%s %s %g m, %d station%s'%(self.latitude.asdms(), self.longitude.asdms(), self.altitude, len(self.station), _plurals(len(self.station)))
 
     def info(self, verbose=0):
@@ -1297,24 +1366,31 @@ def open(filename, quiet=False):
                 if data.dtype[name].type == np.string_:
                     data[name] = list(map(str.rstrip, data[name]))
         if hdu.name == 'OI_WAVELENGTH':
+            revision = header['OI_REVN']
             insname = header['INSNAME']
-            newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'))
+            newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'), revision=revision)
         elif hdu.name == 'OI_TARGET':
+            revision = header['OI_REVN']
             for row in data:
                 target_id = row['TARGET_ID']
+                if (revision >= 2) and ('CATEGORY' in data.names):
+                    category = row['CATEGORY']
+                else:
+                    category = None
                 target = OI_TARGET(target=row['TARGET'], raep0=row['RAEP0'], decep0=row['DECEP0'],
                                    equinox=row['EQUINOX'], ra_err=row['RA_ERR'], dec_err=row['DEC_ERR'],
                                    sysvel=row['SYSVEL'], veltyp=row['VELTYP'], veldef=row['VELDEF'],
                                    pmra=row['PMRA'], pmdec=row['PMDEC'], pmra_err=row['PMRA_ERR'],
                                    pmdec_err=row['PMDEC_ERR'], parallax=row['PARALLAX'],
-                                   para_err=row['PARA_ERR'], spectyp=row['SPECTYP'])
+                                   para_err=row['PARA_ERR'], spectyp=row['SPECTYP'], category=category, revision=revision)
                 newobj.target = np.append(newobj.target, target)
                 targetmap[target_id] = target
         elif hdu.name == 'OI_ARRAY':
+            revision = header['OI_REVN']
             arrname = header['ARRNAME']
             frame = header['FRAME']
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
-            newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data)
+            newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision)
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
             sta_indices[arrname] = data.field('sta_index')
@@ -1324,6 +1400,7 @@ def open(filename, quiet=False):
         header = hdu.header
         data = hdu.data
         if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3'):
+            revision = header['OI_REVN']
             arrname = header.get('ARRNAME')
             array = newobj.array.get(arrname)
             wavelength = newobj.wavelength[header['INSNAME']]
@@ -1359,7 +1436,7 @@ def open(filename, quiet=False):
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
                                                           flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength,
                                                           target=target, array=array, station=station, cflux=cflux,
-                                                          cfluxerr=cfluxerr))
+                                                          cfluxerr=cfluxerr, revision=revision))
         elif hdu.name == 'OI_VIS2':
             for row in data:
                 if 'T' in header['DATE-OBS']:
@@ -1385,7 +1462,7 @@ def open(filename, quiet=False):
                 newobj.vis2 = np.append(newobj.vis2, OI_VIS2(timeobs=timeobs, int_time=int_time, vis2data=vis2data,
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
                                                              wavelength=wavelength, target=target, array=array,
-                                                             station=station))
+                                                             station=station, revision=revision))
         elif hdu.name == 'OI_T3':
             for row in data:
                 if 'T' in header['DATE-OBS']:
@@ -1417,7 +1494,7 @@ def open(filename, quiet=False):
                                                        t3amperr=t3amperr, t3phi=t3phi, t3phierr=t3phierr,
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
                                                        v2coord=v2coord, wavelength=wavelength, target=target,
-                                                       array=array, station=station))
+                                                       array=array, station=station, revision=revision))
 
     hdulist.close()
     if not quiet:
