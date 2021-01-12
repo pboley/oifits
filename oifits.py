@@ -302,10 +302,14 @@ class OI_VIS(object):
             self.amporder = amporder
             self.phiorder = phiorder
             self.visrefmap = visrefmap
-            self.rvis = rvis
-            self.rviserr = rviserr
-            self.ivis = ivis
-            self.iviserr = iviserr
+            if _notnone(rvis): self._rvis = np.array(rvis, dtype=double).reshape(-1)
+            else: self._rvis = None
+            if _notnone(rviserr): self._rviserr = np.array(rviserr, dtype=double).reshape(-1)
+            else: self._rviserr = None
+            if _notnone(ivis): self._ivis = np.array(ivis, dtype=double).reshape(-1)
+            else: self._ivis = None
+            if _notnone(iviserr): self._iviserr = np.array(iviserr, dtype=double).reshape(-1)
+            else: self._iviserr = None
 
     def __eq__(self, other):
 
@@ -349,7 +353,8 @@ class OI_VIS(object):
     def __getattr__(self, attrname):
         if attrname in ('visamp', 'visamperr', 'visphi', 'visphierr'):
             return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
-        elif attrname in ('cflux', 'cfluxerr'):
+        # Optional data arrays which may not be present, and should return None if they aren't
+        elif attrname in ('cflux', 'cfluxerr', 'rvis', 'rviserr', 'ivis', 'iviserr'):
             if _notnone(self.__dict__['_' + attrname]):
                 return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
             else:
