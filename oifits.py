@@ -386,7 +386,7 @@ class OI_VIS2(object):
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
                  target, array=None, station=(None, None), revision=1):
 
-        if revision > 1:
+        if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
@@ -460,7 +460,7 @@ class OI_T3(object):
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
                  v1coord, u2coord, v2coord, wavelength, target, array=None, station=(None,None,None), revision=1):
 
-        if revision > 1:
+        if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
