@@ -1397,7 +1397,7 @@ def open(filename, quiet=False):
         if hdu.name == 'OI_WAVELENGTH':
             revision = header['OI_REVN']
             insname = header['INSNAME']
-            newobj.wavelength[insname] = OI_WAVELENGTH(data.field('EFF_WAVE'), data.field('EFF_BAND'), revision=revision)
+            newobj.wavelength[insname] = OI_WAVELENGTH(data['EFF_WAVE'], data['EFF_BAND'], revision=revision)
         elif hdu.name == 'OI_TARGET':
             revision = header['OI_REVN']
             for row in data:
@@ -1422,7 +1422,7 @@ def open(filename, quiet=False):
             newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision)
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
-            sta_indices[arrname] = data.field('sta_index')
+            sta_indices[arrname] = data['sta_index']
 
     # Then get any science measurements
     for hdu in hdulist:
@@ -1448,21 +1448,21 @@ def open(filename, quiet=False):
                 phiorder = header.get('PHIORDER')
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
-                int_time = row.field('INT_TIME')
-                visamp = np.reshape(row.field('VISAMP'), -1)
-                visamperr = np.reshape(row.field('VISAMPERR'), -1)
-                visphi = np.reshape(row.field('VISPHI'), -1)
-                visphierr = np.reshape(row.field('VISPHIERR'), -1)
-                if 'CFLUX' in row.array.names: cflux = np.reshape(row.field('CFLUX'), -1)
+                int_time = row['INT_TIME']
+                visamp = np.reshape(row['VISAMP'], -1)
+                visamperr = np.reshape(row['VISAMPERR'], -1)
+                visphi = np.reshape(row['VISPHI'], -1)
+                visphierr = np.reshape(row['VISPHIERR'], -1)
+                if 'CFLUX' in row.array.names: cflux = np.reshape(row['CFLUX'], -1)
                 else: cflux = None
-                if 'CFLUXERR' in row.array.names: cfluxerr = np.reshape(row.field('CFLUXERR'), -1)
+                if 'CFLUXERR' in row.array.names: cfluxerr = np.reshape(row['CFLUXERR'], -1)
                 else: cfluxerr = None
-                flag = np.reshape(row.field('FLAG'), -1)
-                ucoord = row.field('UCOORD')
-                vcoord = row.field('VCOORD')
-                target = targetmap[row.field('TARGET_ID')]
+                flag = np.reshape(row['FLAG'], -1)
+                ucoord = row['UCOORD']
+                vcoord = row['VCOORD']
+                target = targetmap[row['TARGET_ID']]
                 if array:
-                    sta_index = row.field('STA_INDEX')
+                    sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
                     s2 = array.station[sta_indices[arrname] == sta_index[1]][0]
                     station = [s1, s2]
@@ -1491,15 +1491,15 @@ def open(filename, quiet=False):
         elif hdu.name == 'OI_VIS2':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
-                int_time = row.field('INT_TIME')
-                vis2data = np.reshape(row.field('VIS2DATA'), -1)
-                vis2err = np.reshape(row.field('VIS2ERR'), -1)
-                flag = np.reshape(row.field('FLAG'), -1)
-                ucoord = row.field('UCOORD')
-                vcoord = row.field('VCOORD')
-                target = targetmap[row.field('TARGET_ID')]
+                int_time = row['INT_TIME']
+                vis2data = np.reshape(row['VIS2DATA'], -1)
+                vis2err = np.reshape(row['VIS2ERR'], -1)
+                flag = np.reshape(row['FLAG'], -1)
+                ucoord = row['UCOORD']
+                vcoord = row['VCOORD']
+                target = targetmap[row['TARGET_ID']]
                 if array:
-                    sta_index = row.field('STA_INDEX')
+                    sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
                     s2 = array.station[sta_indices[arrname] == sta_index[1]][0]
                     station = [s1, s2]
@@ -1512,19 +1512,19 @@ def open(filename, quiet=False):
         elif hdu.name == 'OI_T3':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
-                int_time = row.field('INT_TIME')
-                t3amp = np.reshape(row.field('T3AMP'), -1)
-                t3amperr = np.reshape(row.field('T3AMPERR'), -1)
-                t3phi = np.reshape(row.field('T3PHI'), -1)
-                t3phierr = np.reshape(row.field('T3PHIERR'), -1)
-                flag = np.reshape(row.field('FLAG'), -1)
-                u1coord = row.field('U1COORD')
-                v1coord = row.field('V1COORD')
-                u2coord = row.field('U2COORD')
-                v2coord = row.field('V2COORD')
-                target = targetmap[row.field('TARGET_ID')]
+                int_time = row['INT_TIME']
+                t3amp = np.reshape(row['T3AMP'], -1)
+                t3amperr = np.reshape(row['T3AMPERR'], -1)
+                t3phi = np.reshape(row['T3PHI'], -1)
+                t3phierr = np.reshape(row['T3PHIERR'], -1)
+                flag = np.reshape(row['FLAG'], -1)
+                u1coord = row['U1COORD']
+                v1coord = row['V1COORD']
+                u2coord = row['U2COORD']
+                v2coord = row['V2COORD']
+                target = targetmap[row['TARGET_ID']]
                 if array:
-                    sta_index = row.field('STA_INDEX')
+                    sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
                     s2 = array.station[sta_indices[arrname] == sta_index[1]][0]
                     s3 = array.station[sta_indices[arrname] == sta_index[2]][0]
