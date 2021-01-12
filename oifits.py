@@ -327,10 +327,10 @@ class OI_VIS(object):
             (self.vcoord     != other.vcoord)     or
             (self.array      != other.array)      or
             (self.station    != other.station)    or
-            (not _array_eq(self.visamp, other.visamp)) or
-            (not _array_eq(self.visamperr, other.visamperr)) or
-            (not _array_eq(self.visphi, other.visphi)) or
-            (not _array_eq(self.visphierr, other.visphierr)) or
+            (not _array_eq(self._visamp, other._visamp)) or
+            (not _array_eq(self._visamperr, other._visamperr)) or
+            (not _array_eq(self._visphi, other._visphi)) or
+            (not _array_eq(self._visphierr, other._visphierr)) or
             (not _array_eq(self.flag, other.flag)))
         # Additional checks for OIFITS2
         if self.revision >= 2:
@@ -340,10 +340,10 @@ class OI_VIS(object):
                 (self.amporder   != other.amporder)  or
                 (self.phiorder   != other.phiorder)  or
                 (not _array_eq(self.visrefmap, other.visrefmap)) or
-                (not _array_eq(self.rvis, other.rvis))           or
-                (not _array_eq(self.rviserr, other.rviserr))     or
-                (not _array_eq(self.ivis, other.ivis))           or
-                (not _array_eq(self.iviserr, other.iviserr)))
+                (not _array_eq(self._rvis, other._rvis))           or
+                (not _array_eq(self._rviserr, other._rviserr))     or
+                (not _array_eq(self._ivis, other._ivis))           or
+                (not _array_eq(self._iviserr, other._iviserr)))
 
         return eq
 
@@ -421,8 +421,8 @@ class OI_VIS2(object):
             (self.vcoord     != other.vcoord)     or
             (self.array      != other.array)      or
             (self.station    != other.station)    or
-            (not _array_eq(self.vis2data, other.vis2data)) or
-            (not _array_eq(self.vis2err, other.vis2err)) or
+            (not _array_eq(self._vis2data, other._vis2data)) or
+            (not _array_eq(self._vis2err, other._vis2err)) or
             (not _array_eq(self.flag, other.flag)))
 
     def __ne__(self, other):
@@ -501,10 +501,10 @@ class OI_T3(object):
             (self.v2coord    != other.v2coord)    or
             (self.array      != other.array)      or
             (self.station    != other.station)    or
-            (not _array_eq(self.t3amp, other.t3amp)) or
-            (not _array_eq(self.t3amperr, other.t3amperr)) or
-            (not _array_eq(self.t3phi, other.t3phi)) or
-            (not _array_eq(self.t3phierr, other.t3phierr)) or
+            (not _array_eq(self._t3amp, other._t3amp)) or
+            (not _array_eq(self._t3amperr, other._t3amperr)) or
+            (not _array_eq(self._t3phi, other._t3phi)) or
+            (not _array_eq(self._t3phierr, other._t3phierr)) or
             (not _array_eq(self.flag, other.flag)))
 
     def __ne__(self, other):
