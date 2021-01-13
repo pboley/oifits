@@ -261,6 +261,38 @@ class OI_WAVELENGTH(object):
         print(str(self))
 
 
+class OI_CORR(object):
+
+    def __init__(self, iindx, jindx, corr, revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_CORR revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
+        self.iindx = iindx
+        self.jindx = jindx
+        self.corr = corr
+
+    def __eq__(self, other):
+
+        if type(self) != type(other): return False
+
+        return not (
+            (self.revision != other.revision)              or
+            (not _array_eq(self.iindx, other.iindx)) or
+            (not _array_eq(self.jindx, other.jindx)) or
+            (not _array_eq(self.corr, other.corr)))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return "%d correlation element%s"%(len(self.corr), _plurals(len(self.corr)))
+
+    def info(self):
+        print(str(self))
+
+
 class OI_VIS(object):
     """
     Class for storing visibility amplitude and differential phase data.
