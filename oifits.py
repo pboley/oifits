@@ -529,6 +529,86 @@ class OI_T3(object):
     def info(self):
         print(str(self))
 
+class OI_FLUX(object):
+    """
+    Class for storing raw or calibrated flux measurements.
+    To access the data, use the following hidden attributes:
+
+    fluxdata, fluxerr
+
+    """
+
+    def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
+                 wavelength, target, calibrated, array=None, station=None,
+                 fov=None, fovtype=None, revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_FLUX revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
+        self.timeobs = timeobs
+        self.array = array
+        self.wavelength = wavelength
+        self.target = target
+        self.int_time = int_time
+        self._fluxdata = np.array(fluxdata, dtype=double).reshape(-1)
+        self._fluxerr = np.array(fluxerr, dtype=double).reshape(-1)
+        self.flag = np.array(flag, dtype=bool).reshape(-1)
+        self.station = station
+        self.fov = fov
+        self.fovtype = fovtype
+        self.calibrated = calibrated
+
+    def __eq__(self, other):
+
+        if type(self) != type(other): return False
+
+        return not (
+            (self.revision   != other.revision)   or
+            (self.timeobs    != other.timeobs)    or
+            (self.array      != other.array)      or
+            (self.wavelength != other.wavelength) or
+            (self.target     != other.target)     or
+            (self.int_time   != other.int_time)   or
+            (self.array      != other.array)      or
+            (self.station    != other.station)    or
+            (self.fov        != other.fov)        or
+            (self.fovtype    != other.fovtype)    or
+            (self.calibrated != other.calibrated) or
+            (not _array_eq(self._fluxdata, other._fluxdata)) or
+            (not _array_eq(self._fluxerr, other._fluxerr)) or
+            (not _array_eq(self.flag, other.flag)))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __getattr__(self, attrname):
+        if attrname in ('fluxdata', 'fluxerr'):
+            return ma.masked_array(self.__dict__['_' + attrname], mask=self.flag)
+        else:
+            raise AttributeError(attrname)
+
+    def __setattr__(self, attrname, value):
+        if attrname in ('fluxdata', 'fluxerr'):
+            self.__dict__['_' + attrname] = value
+        else:
+            self.__dict__[attrname] = value
+
+    def __repr__(self):
+        meanf = np.mean(self.fluxdata[np.where(self.flag == False)])
+        if self.station:
+            staname = ' (%s)'%self.station.sta_name
+        else:
+            staname = ''
+        if self.calibrated:
+            cal = 'calibrated'
+        else:
+            cal = 'uncalibrated'
+        return "%s %s%s: %d point%s (%d masked), <F> = %4.2g (%s)"%(self.target.target, self.timeobs.strftime('%F %T'), staname, len(self.fluxdata), _plurals(len(self.fluxdata)), np.sum(self.flag), meanf, cal)
+
+    def info(self):
+        print(str(self))
+
 class OI_STATION(object):
     """ This class corresponds to a single row (i.e. single
     station/telescope) of an OI_ARRAY table."""
@@ -674,6 +754,7 @@ class oifits(object):
         self.vis = np.empty(0)
         self.vis2 = np.empty(0)
         self.t3 = np.empty(0)
+        self.flux = np.empty(0)
 
     def __add__(self, other):
         """Consistently combine two separate oifits objects.  Note
@@ -805,6 +886,19 @@ class oifits(object):
                     newt3.station[2] = stationmap[id(t3.station[2])]
                 new.t3 = np.append(new.t3, newt3)
 
+        for flux in other.flux:
+            if flux not in new.flux:
+                newflux = copy.copy(flux)
+                # The wavelength, target, array and station objects
+                # should point to the appropriate objects inside the
+                # 'new' structure
+                newflux.wavelength = wavelengthmap[id(flux.wavelength)]
+                newflux.target = targetmap[id(flux.target)]
+                if (flux.array):
+                    newflux.array = new.array[arraymap[id(flux.array)]]
+                    newflux.station = stationmap[id(flux.station)]
+                new.flux = np.append(new.flux, flux)
+
         return(new)
 
 
@@ -818,7 +912,8 @@ class oifits(object):
             (self.array      != other.array)      or
             (self.vis        != other.vis).any()  or
             (self.vis2       != other.vis2).any() or
-            (self.t3         != other.t3).any())
+            (self.t3         != other.t3).any()   or
+            (self.flux       != other.flux).any())
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -840,8 +935,8 @@ class oifits(object):
             for wavelength in self.wavelength.values():
                 if len(wavelength.eff_wave) != len(wavelength.eff_band):
                     errors.append("eff_wave and eff_band are of different lengths for wavelength table '%s'"%key)
-        if (self.vis.size + self.vis2.size + self.t3.size == 0):
-            errors.append('Need to have atleast one measurement table (vis, vis2 or t3)')
+        if (self.vis.size + self.vis2.size + self.t3.size + self.flux.size == 0):
+            errors.append('Need to have atleast one measurement table (vis, vis2, t3, flux)')
         for vis in self.vis:
             nwave = len(vis.wavelength.eff_band)
             if (len(vis.visamp) != nwave) or (len(vis.visamperr) != nwave) or (len(vis.visphi) != nwave) or (len(vis.visphierr) != nwave) or (len(vis.flag) != nwave):
@@ -854,6 +949,10 @@ class oifits(object):
             nwave = len(t3.wavelength.eff_band)
             if (len(t3.t3amp) != nwave) or (len(t3.t3amperr) != nwave) or (len(t3.t3phi) != nwave) or (len(t3.t3phierr) != nwave) or (len(t3.flag) != nwave):
                 errors.append("Data size mismatch for visibility measurement 0x%x (wavelength table has a length of %d)"%(id(vis), nwave))
+        for flux in self.flux:
+            nwave = len(flux.wavelength.eff_band)
+            if (len(flux.fluxdata) != nwave) or (len(flux.fluxerr) != nwave) or (len(flux.flag) != nwave):
+                errors.append("Data size mismatch for flux measurement 0x%x (wavelength table has a length of %d)"%(id(flux), nwave))
 
         if warnings:
             print("*** %d warning%s:"%(len(warnings), _plurals(len(warnings))))
@@ -920,6 +1019,20 @@ class oifits(object):
                 print('A closure phase measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(t3))
                 return False
 
+        for flux in self.flux:
+            if flux.array and (flux.array not in self.array.values()):
+                print('A flux measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(flux))
+                return False
+            if flux.station and (flux.station not in flux.array.station):
+                print('A flux measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(flux))
+                return False
+            if flux.wavelength not in self.wavelength.values():
+                print('A flux measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(flux))
+                return False
+            if flux.target not in self.target:
+                print('A flux measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(flux))
+                return False
+
         return True
 
     def info(self, recursive=True, verbose=0):
@@ -982,6 +1095,14 @@ class oifits(object):
                 for t3 in self.t3:
                     t3.info()
             print("%d closure phase measurement%s"%(len(self.t3), _plurals(len(self.t3))))
+        if self.flux.size:
+            if recursive:
+                print("====================================================================")
+                print("SUMMARY OF FLUX MEASUREMENTS")
+                print("====================================================================")
+                for flux in self.flux:
+                    flux.info()
+            print("%d flux measurement%s"%(len(self.flux), _plurals(len(self.flux))))
 
     def save(self, filename):
         """Write the contents of the oifits object to a file in OIFITS
@@ -1429,7 +1550,7 @@ def open(filename, quiet=False):
     for hdu in hdulist:
         header = hdu.header
         data = hdu.data
-        if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3'):
+        if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3', 'OI_FLUX'):
             revision = header['OI_REVN']
             arrname = header.get('ARRNAME')
             array = newobj.array.get(arrname)
@@ -1537,6 +1658,36 @@ def open(filename, quiet=False):
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
                                                        v2coord=v2coord, wavelength=wavelength, target=target,
                                                        array=array, station=station, revision=revision))
+        elif hdu.name == 'OI_FLUX':
+            for row in data:
+                timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
+                int_time = row['INT_TIME']
+                fluxdata = np.reshape(row['FLUXDATA'], -1)
+                fluxerr = np.reshape(row['FLUXERR'], -1)
+                flag = np.reshape(row['FLAG'], -1)
+                target = targetmap[row['TARGET_ID']]
+                fov = header.get('FOV')
+                fovtype = header.get('FOVTYPE')
+                # Some files (e.g. MATISSE pipeline 1.5.1) don't follow the standard
+                try:
+                    if row['CALSTAT'] == 'C':
+                        calibrated = True
+                    else:
+                        calibrated = False
+                except KeyError:
+                    warnings.warn('OI_FLUX header does not contain CALSTAT; assuming data are uncalibrated.\nThis file does not follow the OIFITS2 standard.', UserWarning)
+                    calibrated = False
+                if array:
+                    sta_index = row['STA_INDEX']
+                    station = array.station[sta_indices[arrname] == sta_index][0]
+                else:
+                    station = None
+                newobj.flux = np.append(newobj.flux,
+                                        OI_FLUX(timeobs=timeobs, int_time=int_time,
+                                        fluxdata=fluxdata, fluxerr=fluxerr, flag=flag,
+                                        wavelength=wavelength, target=target,
+                                        array=array, station=station, calibrated=calibrated,
+                                        fov=fov, fovtype=fovtype, revision=revision))
 
     hdulist.close()
     if not quiet:
