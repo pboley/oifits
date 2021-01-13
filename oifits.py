@@ -304,7 +304,7 @@ class OI_VIS(object):
     """
 
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
-                 vcoord, wavelength, target, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
+                 vcoord, wavelength, target, corr=None, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
                  # The follow arguments are used for OIFITS2
                  amptyp=None, phityp=None, amporder=None, phiorder=None,
                  visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None):
@@ -340,6 +340,7 @@ class OI_VIS(object):
             self.rviserr = rviserr
             self.ivis = ivis
             self.iviserr = iviserr
+            self.corr = corr
 
     def __eq__(self, other):
 
@@ -369,6 +370,7 @@ class OI_VIS(object):
                 (self.phityp     != other.phityp)    or
                 (self.amporder   != other.amporder)  or
                 (self.phiorder   != other.phiorder)  or
+                (self.corr       != other.corr)      or
                 (not _array_eq(self.visrefmap, other.visrefmap)) or
                 (not _array_eq(self.rvis, other.rvis))           or
                 (not _array_eq(self.rviserr, other.rviserr))     or
@@ -418,7 +420,7 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, array=None, station=(None, None), revision=1):
+                 target, corr=None, array=None, station=(None, None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
@@ -435,12 +437,14 @@ class OI_VIS2(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
+        if revision >= 2:
+            self.corr = corr
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
-        return not (
+        eq = not (
             (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
@@ -454,6 +458,12 @@ class OI_VIS2(object):
             (not _array_eq(self._vis2data, other._vis2data)) or
             (not _array_eq(self._vis2err, other._vis2err)) or
             (not _array_eq(self.flag, other.flag)))
+        # Additional checks for OIFITS2
+        if self.revision >= 2:
+            eq = eq and not (
+                (self.corr != other.corr))
+
+        return eq
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -492,7 +502,7 @@ class OI_T3(object):
     """
 
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
-                 v1coord, u2coord, v2coord, wavelength, target, array=None, station=(None,None,None), revision=1):
+                 v1coord, u2coord, v2coord, wavelength, target, corr=None, array=None, station=(None,None,None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
@@ -513,12 +523,14 @@ class OI_T3(object):
         self.u2coord = u2coord
         self.v2coord = v2coord
         self.station = station
+        if revision >= 2:
+            self.corr = corr
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
-        return not (
+        eq = not (
             (self.revision   != other.revision)   or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
@@ -536,6 +548,12 @@ class OI_T3(object):
             (not _array_eq(self._t3phi, other._t3phi)) or
             (not _array_eq(self._t3phierr, other._t3phierr)) or
             (not _array_eq(self.flag, other.flag)))
+        # Additional checks for OIFITS2
+        if self.revision >= 2:
+            eq = eq and not (
+                (self.corr != other.corr))
+
+        return eq
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -573,7 +591,7 @@ class OI_FLUX(object):
     """
 
     def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
-                 wavelength, target, calibrated, array=None, station=None,
+                 wavelength, target, calibrated, corr=None, array=None, station=None,
                  fov=None, fovtype=None, revision=1):
 
         if revision > 1:
@@ -583,6 +601,7 @@ class OI_FLUX(object):
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
+        self.corr = corr
         self.target = target
         self.int_time = int_time
         self._fluxdata = np.array(fluxdata, dtype=double).reshape(-1)
@@ -602,6 +621,7 @@ class OI_FLUX(object):
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
+            (self.corr       != other.corr)       or
             (self.target     != other.target)     or
             (self.int_time   != other.int_time)   or
             (self.array      != other.array)      or
@@ -783,6 +803,7 @@ class oifits(object):
 
         self.header = None
         self.wavelength = {}
+        self.corr = {}
         self.target = np.empty(0)
         self.array = {}
         self.vis = np.empty(0)
@@ -820,6 +841,15 @@ class oifits(object):
                 elif new.wavelength[key] != other.wavelength[key]:
                     raise ValueError('Wavelength tables have the same key but differing contents.')
                 wavelengthmap[id(other.wavelength[key])] = new.wavelength[key]
+
+        if len(other.corr):
+            corrmap = {}
+            for key in other.corr.keys():
+                if key not in new.corr.keys():
+                    new.corr[key] = copy.deepcopy(other.corr[key])
+                elif new.corr[key] != other.corr[key]:
+                    raise ValueError('Correlation matrices have the same key but differing contents.')
+                corrmap[id(other.corr[key])] = new.corr[key]
 
         if len(other.target):
             targetmap = {}
@@ -877,11 +907,13 @@ class oifits(object):
         for vis in other.vis:
             if vis not in new.vis:
                 newvis = copy.copy(vis)
-                # The wavelength, target, array and station objects
-                # should point to the appropriate objects inside the
+                # The wavelength, target, corr (if present), array and station
+                # objects should point to the appropriate objects inside the
                 # 'new' structure
                 newvis.wavelength = wavelengthmap[id(vis.wavelength)]
                 newvis.target = targetmap[id(vis.target)]
+                if (vis.corr):
+                    newvis.corr = corrmap[id(vis.corr)]
                 if (vis.array):
                     newvis.array = new.array[arraymap[id(vis.array)]]
                     newvis.station = [None, None]
@@ -892,11 +924,13 @@ class oifits(object):
         for vis2 in other.vis2:
             if vis2 not in new.vis2:
                 newvis2 = copy.copy(vis2)
-                # The wavelength, target, array and station objects
-                # should point to the appropriate objects inside the
+                # The wavelength, target, corr (if present), array and station
+                # objects should point to the appropriate objects inside the
                 # 'new' structure
                 newvis2.wavelength = wavelengthmap[id(vis2.wavelength)]
                 newvis2.target = targetmap[id(vis2.target)]
+                if (vis2.corr):
+                    newvis2.corr = corrmap[id(vis2.corr)]
                 if (vis2.array):
                     newvis2.array = new.array[arraymap[id(vis2.array)]]
                     newvis2.station = [None, None]
@@ -907,11 +941,13 @@ class oifits(object):
         for t3 in other.t3:
             if t3 not in new.t3:
                 newt3 = copy.copy(t3)
-                # The wavelength, target, array and station objects
-                # should point to the appropriate objects inside the
+                # The wavelength, target, corr (if present), array and station
+                # objects should point to the appropriate objects inside the
                 # 'new' structure
                 newt3.wavelength = wavelengthmap[id(t3.wavelength)]
                 newt3.target = targetmap[id(t3.target)]
+                if (t3.corr):
+                    newt3.corr = corrmap[id(t3.corr)]
                 if (t3.array):
                     newt3.array = new.array[arraymap[id(t3.array)]]
                     newt3.station = [None, None, None]
@@ -923,11 +959,13 @@ class oifits(object):
         for flux in other.flux:
             if flux not in new.flux:
                 newflux = copy.copy(flux)
-                # The wavelength, target, array and station objects
-                # should point to the appropriate objects inside the
+                # The wavelength, target, corr (if present), array and station
+                # objects should point to the appropriate objects inside the
                 # 'new' structure
                 newflux.wavelength = wavelengthmap[id(flux.wavelength)]
                 newflux.target = targetmap[id(flux.target)]
+                if (flux.corr):
+                    newflux.corr = corrmap[id(flux.corr)]
                 if (flux.array):
                     newflux.array = new.array[arraymap[id(flux.array)]]
                     newflux.station = stationmap[id(flux.station)]
@@ -942,6 +980,7 @@ class oifits(object):
 
         return not (
             (self.wavelength != other.wavelength)   or
+            (self.corr       != other.corr)         or
             (self.target     != other.target).any() or
             (self.array      != other.array)      or
             (self.vis        != other.vis).any()  or
@@ -966,9 +1005,13 @@ class oifits(object):
         if not self.wavelength:
             errors.append('No OI_WAVELENGTH data')
         else:
-            for wavelength in self.wavelength.values():
+            for key, wavelength in self.wavelength.items():
                 if len(wavelength.eff_wave) != len(wavelength.eff_band):
                     errors.append("eff_wave and eff_band are of different lengths for wavelength table '%s'"%key)
+        for key, corr in self.corr.items():
+            ndata = len(corr.iindx)
+            if (len(corr.jindx) != ndata) or (len(corr.corr) != ndata):
+                errors.append("Number of indices/elements not consistent in correlation table '%s'"%key)
         if (self.vis.size + self.vis2.size + self.t3.size + self.flux.size == 0):
             errors.append('Need to have atleast one measurement table (vis, vis2, t3, flux)')
         for vis in self.vis:
@@ -1018,6 +1061,9 @@ class oifits(object):
             if vis.wavelength not in self.wavelength.values():
                 print('A visibility measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis))
                 return False
+            if vis.corr and (vis.corr not in self.corr.values()):
+                print('A visibility measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(vis))
+                return False
             if vis.target not in self.target:
                 print('A visibility measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis))
                 return False
@@ -1032,6 +1078,9 @@ class oifits(object):
                 return False
             if vis2.wavelength not in self.wavelength.values():
                 print('A visibility^2 measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis2))
+                return False
+            if vis2.corr and (vis2.corr not in self.corr.values()):
+                print('A visibility^2 measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(vis2))
                 return False
             if vis2.target not in self.target:
                 print('A visibility^2 measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(vis2))
@@ -1049,6 +1098,9 @@ class oifits(object):
             if t3.wavelength not in self.wavelength.values():
                 print('A closure phase measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(t3))
                 return False
+            if t3.corr and (t3.corr not in self.corr.values()):
+                print('A closure phase measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(t3))
+                return False
             if t3.target not in self.target:
                 print('A closure phase measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(t3))
                 return False
@@ -1062,6 +1114,9 @@ class oifits(object):
                 return False
             if flux.wavelength not in self.wavelength.values():
                 print('A flux measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(flux))
+                return False
+            if flux.corr and (flux.corr not in self.corr.values()):
+                print('A flux measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(flux))
                 return False
             if flux.target not in self.target:
                 print('A flux measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(flux))
@@ -1085,6 +1140,16 @@ class oifits(object):
                 wavelengths += len(self.wavelength[key].eff_wave)
                 if recursive: print("'%s': %s"%(key, str(self.wavelength[key])))
             print("%d wavelength table%s with %d wavelength%s in total"%(len(self.wavelength), _plurals(len(self.wavelength)), wavelengths, _plurals(wavelengths)))
+        if self.corr:
+            corrs = 0
+            if recursive:
+                print("====================================================================")
+                print("SUMMARY OF CORRELATION TABLES")
+                print("====================================================================")
+            for key in self.corr.keys():
+                corrs += len(self.corr[key].corr)
+                if recursive: print("'%s': %s"%(key, str(self.corr[key])))
+            print("%d correlation table%s with %d matrix element%s in total"%(len(self.corr), _plurals(len(self.corr)), corrs, _plurals(corrs)))
         if self.target.size:
             if recursive:
                 print("====================================================================")
@@ -1539,7 +1604,7 @@ def open(filename, quiet=False):
     # Save the primary header
     newobj.header = hdulist[0].header.copy()
 
-    # First get all the OI_TARGET, OI_WAVELENGTH and OI_ARRAY tables
+    # First get all the OI_TARGET, OI_WAVELENGTH, OI_ARRAY and OI_CORR tables
     for hdu in hdulist:
         header = hdu.header
         data = hdu.data
@@ -1579,6 +1644,10 @@ def open(filename, quiet=False):
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
             sta_indices[arrname] = data['sta_index']
+        elif hdu.name == 'OI_CORR':
+            revision = header['OI_REVN']
+            corrname = header['CORRNAME']
+            newobj.corr[corrname] = OI_CORR(data['iindx'], data['jindx'], data['corr'], revision=revision)
 
     # Then get any science measurements
     for hdu in hdulist:
@@ -1588,6 +1657,7 @@ def open(filename, quiet=False):
             revision = header['OI_REVN']
             arrname = header.get('ARRNAME')
             array = newobj.array.get(arrname)
+            corrname = header.get('CORRNAME')
             wavelength = newobj.wavelength[header['INSNAME']]
             if 'T' in header['DATE-OBS']:
                 warnings.warn('Warning: DATE-OBS contains a timestamp, which is contradictory to the OIFITS2 standard. Timestamp ignored.', UserWarning)
@@ -1596,12 +1666,13 @@ def open(filename, quiet=False):
                 date = header['DATE-OBS'].split('-')
         if hdu.name == 'OI_VIS':
             # OIFITS2 parameters which default to None for OIFITS1
-            amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = None
+            amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = corr = None
             if revision >= 2:
                 amptyp = header.get('AMPTYP')
                 phityp = header.get('PHITYP')
                 amporder = header.get('AMPORDER')
                 phiorder = header.get('PHIORDER')
+                corr = newobj.corr.get(corrname)
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1638,7 +1709,7 @@ def open(filename, quiet=False):
                         iviserr = row['IVISERR']
                 newobj.vis = np.append(newobj.vis, OI_VIS(timeobs=timeobs, int_time=int_time, visamp=visamp,
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
-                                                          flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength,
+                                                          flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength, corr=corr,
                                                           target=target, array=array, station=station, cflux=cflux,
                                                           cfluxerr=cfluxerr, revision=revision,
                                                           amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
@@ -1654,6 +1725,10 @@ def open(filename, quiet=False):
                 ucoord = row['UCOORD']
                 vcoord = row['VCOORD']
                 target = targetmap[row['TARGET_ID']]
+                if revision >= 2:
+                    corr = newobj.corr.get(corrname)
+                else:
+                    corr = None
                 if array:
                     sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
@@ -1663,7 +1738,7 @@ def open(filename, quiet=False):
                     station = [None, None]
                 newobj.vis2 = np.append(newobj.vis2, OI_VIS2(timeobs=timeobs, int_time=int_time, vis2data=vis2data,
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
-                                                             wavelength=wavelength, target=target, array=array,
+                                                             wavelength=wavelength, corr=corr, target=target, array=array,
                                                              station=station, revision=revision))
         elif hdu.name == 'OI_T3':
             for row in data:
@@ -1687,10 +1762,14 @@ def open(filename, quiet=False):
                     station = [s1, s2, s3]
                 else:
                     station = [None, None, None]
+                if revision >= 2:
+                    corr = newobj.corr.get(corrname)
+                else:
+                    corr = None
                 newobj.t3 = np.append(newobj.t3, OI_T3(timeobs=timeobs, int_time=int_time, t3amp=t3amp,
                                                        t3amperr=t3amperr, t3phi=t3phi, t3phierr=t3phierr,
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
-                                                       v2coord=v2coord, wavelength=wavelength, target=target,
+                                                       v2coord=v2coord, wavelength=wavelength, corr=corr, target=target,
                                                        array=array, station=station, revision=revision))
         elif hdu.name == 'OI_FLUX':
             for row in data:
@@ -1702,6 +1781,7 @@ def open(filename, quiet=False):
                 target = targetmap[row['TARGET_ID']]
                 fov = header.get('FOV')
                 fovtype = header.get('FOVTYPE')
+                corr = newobj.corr.get(corrname)
                 # Some files (e.g. MATISSE pipeline 1.5.1) don't follow the standard
                 try:
                     if row['CALSTAT'] == 'C':
@@ -1719,7 +1799,7 @@ def open(filename, quiet=False):
                 newobj.flux = np.append(newobj.flux,
                                         OI_FLUX(timeobs=timeobs, int_time=int_time,
                                         fluxdata=fluxdata, fluxerr=fluxerr, flag=flag,
-                                        wavelength=wavelength, target=target,
+                                        wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
                                         fov=fov, fovtype=fovtype, revision=revision))
 
