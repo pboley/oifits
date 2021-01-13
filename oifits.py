@@ -1,25 +1,25 @@
 """
-A module for reading/writing OIFITS (v1) files
+A module for reading/writing OIFITS (v1, v2) files
 
-To open an existing OIFITS file, use the oifits.open(filename)
-function.  This will return an oifits object with the following
-members (any of which can be empty dictionaries or numpy arrays):
+To open an existing OIFITS file, use the oifits.open(filename) function, where
+'filename' can be either a filename or HDUList object.  This will return an
+oifits object with the following members (any of which can be empty
+dictionaries or numpy arrays):
 
-   array: a dictionary of interferometric arrays, as defined by the
-   OI_ARRAY tables.  The dictionary key is the name of the array
-   (ARRNAME).
+   array: a dictionary of interferometric arrays, as defined by the OI_ARRAY
+   tables.  The dictionary key is the name of the array (ARRNAME).
 
    header: the header from the primary HDU of the file.
 
-   target: a numpy array of targets, as defined by the rows of the
-   OI_TARGET table.
+   target: a numpy array of targets, as defined by the rows of the OI_TARGET
+   table.
 
    wavelength: a dictionary of wavelength tables (OI_WAVELENGTH).  The
    dictionary key is the name of the instrument/settings (INSNAME).
 
-   vis, vis2 and t3: numpy arrays of objects containing all the
-   measurement information.  Each list member corresponds to a row in
-   an OI_VIS/OI_VIS2/OI_T3 table.
+   vis, vis2, t3 and flux: numpy arrays of objects containing all the
+   measurement information.  Each list member corresponds to a row in an
+   OI_VIS/OI_VIS2/OI_T3/OI_FLUX table.
 
 A summary of the information in the oifits object can be obtained by
 using the info() method:
@@ -28,45 +28,47 @@ using the info() method:
    > oifitsobj = oifits.open('foo.fits')
    > oifitsobj.info()
 
-This module makes an ad-hoc, backwards-compatible change to the OIFITS
-revision 1 standard originally described by Pauls et al., 2005, PASP,
-117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files produced by
-this file contain two additional columns for the correlated flux,
-CFLUX and CFLUXERR , which are arrays with a length corresponding to
-the number of wavelength elements (just as VISAMP/VIS2DATA).  Revision
-2 of the OIFITS standard (Duvert, Young & Hummel; arXiv:1510.04556v2)
-is not yet supported, but will be soon.
+This module makes an ad-hoc, backwards-compatible change to the OIFITS revision
+1 standard originally described by Pauls et al., 2005, PASP, 117, 1255.  The
+OI_VIS and OI_VIS2 tables in OIFITS files produced by this file contain two
+additional columns for the correlated flux, CFLUX and CFLUXERR , which are
+arrays with a length corresponding to the number of wavelength elements (just
+as VISAMP/VIS2DATA).
 
-The main purpose of this module is to allow easy access to your OIFITS
-data within Python, where you can then analyze it in any way you want.
-As of version 0.3, the module can now be used to create OIFITS files
-from scratch without serious pain.  Be warned, creating an array table
-from scratch is probably like nailing jelly to a tree.  In a future
-verison this may become easier.
+As of version 0.4, revision 2 of the OIFITS standard (Duvert, Young & Hummel,
+2017, A&A 597, A8) is supported, with the exception of correlations and
+polarization.
 
-The module also provides a simple mechanism for combining multiple
-oifits objects, achieved by using the '+' operator on two oifits
-objects: result = a + b.  The result can then be written to a file
-using result.save(filename).
+The main purpose of this module is to allow easy access to your OIFITS data
+within Python, where you can then analyze it in any way you want.  As of
+version 0.3, the module can now be used to create OIFITS files from scratch
+without serious pain.  Be warned, creating an array table from scratch is
+probably like nailing jelly to a tree.  In a future verison this may become
+easier. Note that array tables are a requirement only for OIFITS2.
 
-Many of the parameters and their meanings are not specifically
-documented here.  However, the nomenclature mirrors that of the OIFITS
-standard, so it is recommended to use this module with the PASP
-reference above in hand.
+The module also provides a simple mechanism for combining multiple oifits
+objects, achieved by using the '+' operator on two oifits objects: result = a +
+b.  The result can then be written to a file using result.save(filename).
 
-Beginning with version 0.3, the OI_VIS/OI_VIS2/OI_T3 classes now use
-masked arrays for convenience, where the mask is defined via the
-'flag' member of these classes.  Beware of the following subtlety: as
-before, the array data are accessed via (for example) OI_VIS.visamp;
-however, OI_VIS.visamp is just a method which constructs (on the fly)
-a masked array from OI_VIS._visamp, which is where the data are
-actually stored.  This is done transparently, and the data can be
-accessed and modified transparently via the "visamp" hidden attribute.
-The same goes for correlated fluxes, differential/closure phases,
-triple products, etc.  See the notes on the individual classes for a
+Many of the parameters and their meanings are not specifically documented here.
+However, the nomenclature mirrors that of the OIFITS standard, so it is
+recommended to use this module with the OIFITS1/OIFITS2 references above in
+hand.
+
+Beginning with version 0.3, the OI_VIS/OI_VIS2/OI_T3 classes now use masked
+arrays for convenience, where the mask is defined via the 'flag' member of
+these classes.  This also concerns the OI_FLUX tables from OIFITS2. Beware of
+the following subtlety: as before, the array data are accessed via (for
+example) OI_VIS.visamp; however, OI_VIS.visamp is just a method which
+constructs (on the fly) a masked array from OI_VIS._visamp, which is where the
+data are actually stored.  This is done transparently, and the data can be
+accessed and modified transparently via the "visamp" hidden attribute.  The
+same goes for correlated fluxes, differential/closure phases, triple products,
+total flux measurements, etc.  See the notes on the individual classes for a
 list of all the "hidden" attributes.
 
-For further information, contact Paul Boley (pboley@urfu.ru).
+For further information, contact Paul Boley (pboley@gmail.com) or open an issue
+on Github (https://github.com/pboley/oifits/).
 
 """
 
@@ -82,7 +84,7 @@ import warnings
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='12 January 2021'
+__date__ ='13 January 2021'
 __version__ = '0.4-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
@@ -513,7 +515,7 @@ class OI_T3(object):
             raise AttributeError(attrname)
 
     def __setattr__(self, attrname, value):
-        if attrname in ('vis2data', 'vis2err'):
+        if attrname in ('t3amp', 't3amperr', 't3phi', 't3phierr'):
             self.__dict__['_' + attrname] = value
         else:
             self.__dict__[attrname] = value
@@ -948,7 +950,7 @@ class oifits(object):
         for t3 in self.t3:
             nwave = len(t3.wavelength.eff_band)
             if (len(t3.t3amp) != nwave) or (len(t3.t3amperr) != nwave) or (len(t3.t3phi) != nwave) or (len(t3.t3phierr) != nwave) or (len(t3.flag) != nwave):
-                errors.append("Data size mismatch for visibility measurement 0x%x (wavelength table has a length of %d)"%(id(vis), nwave))
+                errors.append("Data size mismatch for t3 measurement 0x%x (wavelength table has a length of %d)"%(id(t3), nwave))
         for flux in self.flux:
             nwave = len(flux.wavelength.eff_band)
             if (len(flux.fluxdata) != nwave) or (len(flux.fluxerr) != nwave) or (len(flux.flag) != nwave):
