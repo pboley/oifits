@@ -1747,7 +1747,9 @@ def open(filename, quiet=False):
             arrname = header.get('ARRNAME')
             array = newobj.array.get(arrname)
             corrname = header.get('CORRNAME')
-            wavelength = newobj.wavelength[header['INSNAME']]
+            # INSPOL table has INSNAME in data, not in header
+            if hdu.name != 'OI_INSPOL':
+                wavelength = newobj.wavelength[header['INSNAME']]
             if 'T' in header['DATE-OBS']:
                 warnings.warn('Warning: DATE-OBS contains a timestamp, which is contradictory to the OIFITS2 standard. Timestamp ignored.', UserWarning)
                 date = header['DATE-OBS'].split('T')[0].split('-')
@@ -1871,14 +1873,9 @@ def open(filename, quiet=False):
                 fov = header.get('FOV')
                 fovtype = header.get('FOVTYPE')
                 corr = newobj.corr.get(corrname)
-                # Some files (e.g. MATISSE pipeline 1.5.1) don't follow the standard
-                try:
-                    if row['CALSTAT'] == 'C':
-                        calibrated = True
-                    else:
-                        calibrated = False
-                except KeyError:
-                    warnings.warn('OI_FLUX header does not contain CALSTAT; assuming data are uncalibrated.\nThis file does not follow the OIFITS2 standard.', UserWarning)
+                if header['CALSTAT'] == 'C':
+                    calibrated = True
+                else:
                     calibrated = False
                 if array:
                     sta_index = row['STA_INDEX']
@@ -1897,6 +1894,7 @@ def open(filename, quiet=False):
                 station = array.station[sta_indices[arrname] == row['STA_INDEX']][0]
                 timestart = _mjdzero+datetime.timedelta(days=row['MJD_OBS'])
                 timeend = _mjdzero+datetime.timedelta(days=row['MJD_END'])
+                wavelength = newobj.wavelength[row['INSNAME']]
                 newobj.inspol = np.append(newobj.inspol,
                                           OI_INSPOL(timestart, timeend, header['ORIENT'], header['MODEL'],
                                           row['JXX'], row['JYY'], row['JXY'], row['JYX'],
