@@ -292,7 +292,6 @@ class OI_CORR(object):
     def info(self):
         print(str(self))
 
-
 class OI_VIS(object):
     """
     Class for storing visibility amplitude and differential phase data.
@@ -707,6 +706,56 @@ class OI_STATION(object):
         else:
             return '%s/%s (%g m)'%(self.sta_name, self.tel_name, self.diameter)
 
+class OI_INSPOL(object):
+
+    def __init__(self, timestart, timeend, orient, model, jxx, jyy, jxy, jyx, wavelength, target, array, station, revision=1):
+
+        if revision > 1:
+            warnings.warn('OI_INSPOL revision %d not implemented yet'%revision, UserWarning)
+
+        self.revision = revision
+        self.timestart = timestart
+        self.timeend = timeend
+        self.orient = orient
+        self.model = model
+        self.jxx = np.array(jxx, dtype=complex).reshape(-1)
+        self.jyy = np.array(jyy, dtype=complex).reshape(-1)
+        self.jxy = np.array(jyx, dtype=complex).reshape(-1)
+        self.jyx = np.array(jyx, dtype=complex).reshape(-1)
+        self.wavelength = wavelength
+        self.target = target
+        self.array = array
+        self.station = station
+
+    def __eq__(self, other):
+
+        if type(self) != type(other): return False
+
+        return not (
+            (self.revision   != other.revision)   or
+            (self.timestart  != other.timestart)  or
+            (self.timeend    != other.timeend)    or
+            (self.orient     != other.orient)     or
+            (self.model      != other.model)      or
+            (self.wavelength != other.wavelength) or
+            (self.target     != other.target)     or
+            (self.array      != other.array)      or
+            (self.station    != other.station)    or
+            (not _array_eq(self.jxx, other.jxx)) or
+            (not _array_eq(self.jyy, other.jyy)) or
+            (not _array_eq(self.jxy, other.jxy)) or
+            (not _array_eq(self.jyx, other.jyx)))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+
+        return '%s (%s): %s-%s'%(self.target.target, self.station.tel_name, self.timestart.strftime('%F %T'), self.timeend.strftime('%F %T'))
+
+    def info(self):
+        print(str(self))
+
 class OI_ARRAY(object):
     """Contains all the data for a single OI_ARRAY table.  Note the
     hidden convenience attributes latitude, longitude, and altitude."""
@@ -810,6 +859,7 @@ class oifits(object):
         self.vis2 = np.empty(0)
         self.t3 = np.empty(0)
         self.flux = np.empty(0)
+        self.inspol = np.empty(0)
 
     def __add__(self, other):
         """Consistently combine two separate oifits objects.  Note
@@ -969,7 +1019,19 @@ class oifits(object):
                 if (flux.array):
                     newflux.array = new.array[arraymap[id(flux.array)]]
                     newflux.station = stationmap[id(flux.station)]
-                new.flux = np.append(new.flux, flux)
+                new.flux = np.append(new.flux, newflux)
+
+        for inspol in other.inspol:
+                newinspol = copy.copy(inspol)
+                # The wavelength, target, corr (if present), array and station
+                # objects should point to the appropriate objects inside the
+                # 'new' structure
+                newinspol.wavelength = wavelengthmap[id(inspol.wavelength)]
+                newinspol.target = targetmap[id(inspol.target)]
+                newinspol.array = new.array[arraymap[id(inspol.array)]]
+                newinspol.station = stationmap[id(inspol.station)]
+                new.inspol = np.append(new.inspol, newinspol)
+
 
         return(new)
 
@@ -986,7 +1048,8 @@ class oifits(object):
             (self.vis        != other.vis).any()  or
             (self.vis2       != other.vis2).any() or
             (self.t3         != other.t3).any()   or
-            (self.flux       != other.flux).any())
+            (self.flux       != other.flux).any() or
+            (self.inspol     != other.inspol).any())
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -1030,6 +1093,10 @@ class oifits(object):
             nwave = len(flux.wavelength.eff_band)
             if (len(flux.fluxdata) != nwave) or (len(flux.fluxerr) != nwave) or (len(flux.flag) != nwave):
                 errors.append("Data size mismatch for flux measurement 0x%x (wavelength table has a length of %d)"%(id(flux), nwave))
+        for inspol in self.inspol:
+            nwave = len(inspol.wavelength.eff_band)
+            if (len(inspol.jxx) != nwave) or (len(inspol.jyy) != nwave) or (len(inspol.jxy) != nwave) or (len(inspol.jyx) != nwave):
+                errors.append("Data size mismatch for inspol measurement 0x%x (wavelength table has a length of %d)"%(id(flux), nwave))
 
         if warnings:
             print("*** %d warning%s:"%(len(warnings), _plurals(len(warnings))))
@@ -1122,6 +1189,20 @@ class oifits(object):
                 print('A flux measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(flux))
                 return False
 
+        for inspol in self.inspol:
+            if inspol.array not in self.array.values():
+                print('An inspol measurement (0x%x) refers to an array which is not inside the main oifits object.'%id(inspol))
+                return False
+            if inspol.station not in inspol.array.station:
+                print('An inspol measurement (0x%x) refers to a station which is not inside the main oifits object.'%id(inspol))
+                return False
+            if inspol.wavelength not in self.wavelength.values():
+                print('An inspol measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(inspol))
+                return False
+            if inspol.target not in self.target:
+                print('An inspol measurement (0x%x) refers to a target which is not inside the main oifits object.'%id(inspol))
+                return False
+
         return True
 
     def info(self, recursive=True, verbose=0):
@@ -1202,6 +1283,14 @@ class oifits(object):
                 for flux in self.flux:
                     flux.info()
             print("%d flux measurement%s"%(len(self.flux), _plurals(len(self.flux))))
+        if self.inspol.size:
+            if recursive:
+                print("====================================================================")
+                print("SUMMARY OF INSPOL MEASUREMENTS")
+                print("====================================================================")
+                for inspol in self.inspol:
+                    inspol.info()
+            print("%d inspol measurement%s"%(len(self.inspol), _plurals(len(self.inspol))))
 
     def save(self, filename):
         """Write the contents of the oifits object to a file in OIFITS
@@ -1653,7 +1742,7 @@ def open(filename, quiet=False):
     for hdu in hdulist:
         header = hdu.header
         data = hdu.data
-        if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3', 'OI_FLUX'):
+        if hdu.name in ('OI_VIS', 'OI_VIS2', 'OI_T3', 'OI_FLUX', 'OI_INSPOL'):
             revision = header['OI_REVN']
             arrname = header.get('ARRNAME')
             array = newobj.array.get(arrname)
@@ -1802,6 +1891,16 @@ def open(filename, quiet=False):
                                         wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
                                         fov=fov, fovtype=fovtype, revision=revision))
+        elif hdu.name == 'OI_INSPOL':
+            for row in data:
+                target = targetmap[row['TARGET_ID']]
+                station = array.station[sta_indices[arrname] == row['STA_INDEX']][0]
+                timestart = _mjdzero+datetime.timedelta(days=row['MJD_OBS'])
+                timeend = _mjdzero+datetime.timedelta(days=row['MJD_END'])
+                newobj.inspol = np.append(newobj.inspol,
+                                          OI_INSPOL(timestart, timeend, header['ORIENT'], header['MODEL'],
+                                          row['JXX'], row['JYY'], row['JXY'], row['JYX'],
+                                          wavelength, target, array, station, revision=revision))
 
     hdulist.close()
     if not quiet:
