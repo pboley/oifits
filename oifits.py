@@ -1205,6 +1205,44 @@ class oifits(object):
 
         return True
 
+    def getoifitsver(self):
+        """Get the minimum OIFITS "version" of the object.  This is based on
+        revision numbers of the individual tables, and the presence or absence
+        of some tables (e.g. OI_INSPOL, OI_CORR, OI_FLUX.
+
+        As of now (Jan 2021) returns only 1 or 2. A version of "1" means there
+        are no OIFITS2 tables present; a verision of "2" means there is at
+        least one OIFITS2 table present."""
+
+        for wavelength in self.wavelength.values():
+            if wavelength.revision >= 2:
+                return 2
+
+        for target in self.target:
+            if target.revision >= 2:
+                return 2
+
+        for array in self.array.values():
+            if array.revision >= 2:
+                return 2
+
+        for vis in self.vis:
+            if vis.revision >= 2:
+                return 2
+
+        for vis2 in self.vis2:
+            if vis2.revision >= 2:
+                return 2
+
+        for t3 in self.t3:
+            if t3.revision >= 2:
+                return 2
+
+        if len(self.corr) or len(self.flux) or len(self.inspol):
+            return 2
+
+        return 1
+
     def info(self, recursive=True, verbose=0):
         """Print out a summary of the contents of the oifits object.
         Set recursive=True to obtain more specific information about
