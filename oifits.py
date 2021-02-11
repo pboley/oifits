@@ -1358,7 +1358,7 @@ class oifits(object):
             del hdu.header[('COMMENT', i)]
         # Add (new) advertisement
         hdu.header.add_comment('Written by OIFITS Python module version %s'%__version__)
-        hdu.header.add_comment('http://astro.ins.urfu.ru/pages/~pboley/oifits/')
+        hdu.header.add_comment('https://github.com/pboley/oifits')
 
         wavelengthmap = {}
         hdulist.append(hdu)
