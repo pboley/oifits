@@ -1128,7 +1128,7 @@ class oifits(object):
             if vis.wavelength not in self.wavelength.values():
                 print('A visibility measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis))
                 return False
-            if vis.corr and (vis.corr not in self.corr.values()):
+            if vis.revision >= 2 and vis.corr and (vis.corr not in self.corr.values()):
                 print('A visibility measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(vis))
                 return False
             if vis.target not in self.target:
@@ -1146,7 +1146,7 @@ class oifits(object):
             if vis2.wavelength not in self.wavelength.values():
                 print('A visibility^2 measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(vis2))
                 return False
-            if vis2.corr and (vis2.corr not in self.corr.values()):
+            if vis2.revision >= 2 and vis2.corr and (vis2.corr not in self.corr.values()):
                 print('A visibility^2 measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(vis2))
                 return False
             if vis2.target not in self.target:
@@ -1165,7 +1165,7 @@ class oifits(object):
             if t3.wavelength not in self.wavelength.values():
                 print('A closure phase measurement (0x%x) refers to a wavelength table which is not inside the main oifits object.'%id(t3))
                 return False
-            if t3.corr and (t3.corr not in self.corr.values()):
+            if t3.revision >= 2 and t3.corr and (t3.corr not in self.corr.values()):
                 print('A closure phase measurement (0x%x) refers to a correlation table which is not inside the main oifits object.'%id(t3))
                 return False
             if t3.target not in self.target:
