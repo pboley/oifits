@@ -36,12 +36,12 @@ experimental.
 
 Earlier versions of this module made an ad-hoc, backwards-compatible change to
 the OIFITS revision 1 standard originally described by Pauls et al., 2005, PASP,
-117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files read by this module
-can contain two additional columns for the correlated flux, CFLUX and CFLUXERR ,
-which are arrays with a length corresponding to the number of wavelength
-elements (just as VISAMP/VIS2DATA). Support for writing these additional columns
-was removed in version 0.4, as the OIFITS standard now provides a mechanism for
-saving correlated flux measurements in OI_VIS tables.
+117, 1255.  The OI_VIS tables in OIFITS files read by this module can contain
+two additional columns for the correlated flux, CFLUX and CFLUXERR , which are
+arrays with a length corresponding to the number of wavelength elements (just as
+VISAMP/VIS2DATA). Support for writing these additional columns was removed in
+version 0.4, as the OIFITS standard now provides a mechanism for saving
+correlated flux measurements in OI_VIS tables.
 
 The main purpose of this module is to allow easy access to your OIFITS data
 within Python, where you can then analyze it in any way you want.  As of
