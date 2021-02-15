@@ -81,6 +81,6 @@ for k1, k2 in np.random.random_integers(len(vlti.station)-1, size=(points,2)):
     sample.vis = np.append(sample.vis, oifits.OI_VIS(datetime.datetime.now(), 100, visamp, zeros, zeros, zeros, flag,
                                                      u, v, sample.wavelength['MIDI/PRISM'], sample.target[0],
                                                      array=sample.array['VLTI'], station=[s1,s2]))
-    print '%s%s: (%g, %g)'%(s1.sta_name, s2.sta_name, u, v)
+    print('%s%s: (%g, %g)'%(s1.sta_name, s2.sta_name, u, v))
 
 sample.save('%s.fits'%name)
