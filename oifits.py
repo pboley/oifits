@@ -1491,6 +1491,8 @@ class oifits(object):
                                           'visamp':[], 'visamperr':[], 'visphi':[], 'visphierr':[],
                                           'ucoord':[], 'vcoord':[],
                                           'sta_index':[], 'flag':[]}
+                if _notnone(vis.cflux) or _notnone(vis.cfluxerr):
+                    warnings.warn('CFLUX columns in OI_VIS object will not be saved.', UserWarning)
                 data['target_id'].append(targetmap[id(vis.target)])
                 if vis.timeobs:
                     time = vis.timeobs - refdate
