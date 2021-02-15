@@ -28,16 +28,20 @@ using the info() method:
    > oifitsobj = oifits.open('foo.fits')
    > oifitsobj.info()
 
-This module makes an ad-hoc, backwards-compatible change to the OIFITS revision
-1 standard originally described by Pauls et al., 2005, PASP, 117, 1255.  The
-OI_VIS and OI_VIS2 tables in OIFITS files produced by this file contain two
-additional columns for the correlated flux, CFLUX and CFLUXERR , which are
-arrays with a length corresponding to the number of wavelength elements (just
-as VISAMP/VIS2DATA).
-
 As of version 0.4, revision 2 of the OIFITS standard (Duvert, Young & Hummel,
 2017, A&A 597, A8) is supported, with the exception of correlations and
-polarization.
+polarization.  If you need support for these features of the OIFITS2 standard,
+please open an issue on github.  Support for writing OIFITS2 files is currently
+experimental.
+
+Earlier versions of this module made an ad-hoc, backwards-compatible change to
+the OIFITS revision 1 standard originally described by Pauls et al., 2005, PASP,
+117, 1255.  The OI_VIS and OI_VIS2 tables in OIFITS files read by this module
+can contain two additional columns for the correlated flux, CFLUX and CFLUXERR ,
+which are arrays with a length corresponding to the number of wavelength
+elements (just as VISAMP/VIS2DATA). Support for writing these additional columns
+was removed in version 0.4, as the OIFITS standard now provides a mechanism for
+saving correlated flux measurements in OI_VIS tables.
 
 The main purpose of this module is to allow easy access to your OIFITS data
 within Python, where you can then analyze it in any way you want.  As of
@@ -1485,7 +1489,7 @@ class oifits(object):
                 else:
                     data = tables[key] = {'target_id':[], 'time':[], 'mjd':[], 'int_time':[],
                                           'visamp':[], 'visamperr':[], 'visphi':[], 'visphierr':[],
-                                          'cflux':[], 'cfluxerr':[], 'ucoord':[], 'vcoord':[],
+                                          'ucoord':[], 'vcoord':[],
                                           'sta_index':[], 'flag':[]}
                 data['target_id'].append(targetmap[id(vis.target)])
                 if vis.timeobs:
@@ -1503,32 +1507,12 @@ class oifits(object):
                     data['visphi'].append(vis.visphi[0])
                     data['visphierr'].append(vis.visphierr[0])
                     data['flag'].append(vis.flag[0])
-                    if _notnone(vis.cflux):
-                        data['cflux'].append(vis.cflux[0])
-                    else:
-                        data['cflux'].append(None)
-                    if _notnone(vis.cfluxerr):
-                        data['cfluxerr'].append(vis.cfluxerr[0])
-                    else:
-                        data['cfluxerr'].append(None)
                 else:
                     data['visamp'].append(vis.visamp)
                     data['visamperr'].append(vis.visamperr)
                     data['visphi'].append(vis.visphi)
                     data['visphierr'].append(vis.visphierr)
                     data['flag'].append(vis.flag)
-                    if _notnone(vis.cflux):
-                        data['cflux'].append(vis.cflux)
-                    else:
-                        cflux=np.empty(nwave)
-                        cflux[:]=None
-                        data['cflux'].append(cflux)
-                    if _notnone(vis.cfluxerr):
-                        data['cfluxerr'].append(vis.cfluxerr)
-                    else:
-                        cfluxerr=np.empty(nwave)
-                        cfluxerr[:]=None
-                        data['cfluxerr'].append(cfluxerr)
                 data['ucoord'].append(vis.ucoord)
                 data['vcoord'].append(vis.vcoord)
                 if vis.station[0] and vis.station[1]:
@@ -1548,8 +1532,6 @@ class oifits(object):
                     fits.Column(name='VISAMPERR', format='%dD'%nwave, array=data['visamperr']),
                     fits.Column(name='VISPHI', unit='DEGREES', format='%dD'%nwave, array=data['visphi']),
                     fits.Column(name='VISPHIERR', unit='DEGREES', format='%dD'%nwave, array=data['visphierr']),
-                    fits.Column(name='CFLUX', format='%dD'%nwave, array=data['cflux']),
-                    fits.Column(name='CFLUXERR', format='%dD'%nwave, array=data['cfluxerr']),
                     fits.Column(name='UCOORD', format='1D', unit='METERS', array=data['ucoord']),
                     fits.Column(name='VCOORD', format='1D', unit='METERS', array=data['vcoord']),
                     fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
@@ -1711,7 +1693,7 @@ class oifits(object):
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
 
-        hdulist.writeto(filename, clobber=True)
+        hdulist.writeto(filename, overwrite=True)
 
 
 
