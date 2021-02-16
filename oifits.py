@@ -9,6 +9,9 @@ dictionaries or numpy arrays):
    array: a dictionary of interferometric arrays, as defined by the OI_ARRAY
    tables.  The dictionary key is the name of the array (ARRNAME).
 
+   corr: a dictionary of correlation matrices, as defined by the OI_CORR table.
+   The dictionary key is the name of the table (CORRNAME).
+
    header: the header from the primary HDU of the file.
 
    target: a numpy array of targets, as defined by the rows of the OI_TARGET
@@ -20,6 +23,9 @@ dictionaries or numpy arrays):
    vis, vis2, t3 and flux: numpy arrays of objects containing all the
    measurement information.  Each list member corresponds to a row in an
    OI_VIS/OI_VIS2/OI_T3/OI_FLUX table.
+
+   inspol: a numpy array of objects containing the instrumental polarization
+   information, as defined by the rows of the OI_INSPOL table.
 
 A summary of the information in the oifits object can be obtained by
 using the info() method:
@@ -39,9 +45,9 @@ the OIFITS revision 1 standard originally described by Pauls et al., 2005, PASP,
 117, 1255.  The OI_VIS tables in OIFITS files read by this module can contain
 two additional columns for the correlated flux, CFLUX and CFLUXERR , which are
 arrays with a length corresponding to the number of wavelength elements (just as
-VISAMP/VIS2DATA). Support for writing these additional columns was removed in
-version 0.4, as the OIFITS standard now provides a mechanism for saving
-correlated flux measurements in OI_VIS tables.
+VISAMP). Support for writing these additional columns was removed in version
+0.4, as the OIFITS standard now provides a mechanism for saving correlated flux
+measurements in OI_VIS tables.
 
 The main purpose of this module is to allow easy access to your OIFITS data
 within Python, where you can then analyze it in any way you want.  As of
