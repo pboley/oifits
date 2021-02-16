@@ -12,12 +12,12 @@ repository.
 The module was tested with Astropy 4.2 and numpy 1.19.2 under Python 3.8.5.
 Earlier versions will probably work, too.
 
-For some example functions which make use of the module, see `oitools.py`.
-These are undocumented, messy examples only and may not work; you should
-probably write your own.
+For some example functions which make use of the module, see `oitools.py` in the
+contrib directory. These are undocumented, messy examples only and may not work;
+you should probably write your own.
 
-Also included is a sample array file for the VLTI.  This can be viewed using
-the plot_array function in `oitools.py`:
+Also included in the contrib directory is a sample array file for the VLTI.
+This can be viewed using the plot_array function in `oitools.py`:
 
 ```python
 import matplotlib.pylab as plt
@@ -125,7 +125,7 @@ reinterpolating your data and is beyond the scope of this module.
 An example of creating an OIFITS file from scratch, which simulates using the
 VLTI and MIDI (now decomissioned) for observations at random hour angles of the
 calibrator star HD 148478, described as a uniform disk, can be found in
-`sample.py`.
+`sample.py` in the contrib directory.
 
 Once you have assembled your OIFITS object, you can check if it is *consistent*
 or *valid* by using the `isconsistent()` and `isvalid()` methods of the newly
