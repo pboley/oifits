@@ -1,5 +1,5 @@
+import numpy as np
 import oifits
-from copy import deepcopy
 
 # Modify (in place) OI_VIS tables in OIFITS1 file with CFLUX/CFLUXERR to OIFITS2
 # with amptyp='correlated flux'
