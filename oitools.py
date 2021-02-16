@@ -246,7 +246,7 @@ def plot_visamp_map(oifitsobj, width=0.1, height=0.1, colorcoding=None):
     for vis in oifitsobj.vis:
         B = sqrt(vis.ucoord**2+vis.vcoord**2)
         pa = (arctan(vis.ucoord / vis.vcoord) * 180.0 / pi) % 180.0
-        print B, pa
+        print(B, pa)
         ax = fig.add_axes((B/80.0-width/2.0, pa/180.0-height/2.0, width, height), axis_bgcolor=(0,0,0,0))
         if colorcoding:
             for key in sort(colorcoding.keys()):
@@ -310,7 +310,7 @@ def plot_phases(oidata, uvplot=False, legend=False):
             ax2.plot([-u,u],[-v,v], '.', label=label, color=color)
         names.append(vis.target.target)
         baselinemax = np.amax([np.sqrt(u**2+v**2), baselinemax])
-        print '%10s: %s, %5.2f m, %s'%(line[0].get_color(), label, np.sqrt(u**2+v**2), vis.timeobs)
+        print('%10s: %s, %5.2f m, %s'%(line[0].get_color(), label, np.sqrt(u**2+v**2), vis.timeobs))
 
     ax1.set_xlim(xmin,xmax)
     ax1.set_ylim(ymin,ymax)
@@ -409,7 +409,7 @@ def plot_visibilities(oidata, uvplot=False, legend=False, ploterror=False):
 
 
     if legend and uvplot: ax2.legend(prop={'size':10},numpoints=1)
-    print output
+    print(output)
 
 def plot_gaussian_widths_vs_wavelength(oidata, uvplot=False, legend=False, ploterror=False):
 
@@ -478,7 +478,7 @@ def plot_gaussian_widths_vs_wavelength(oidata, uvplot=False, legend=False, plote
 
 
     if legend and uvplot: ax2.legend(prop={'size':10},numpoints=1)
-    print output
+    print(output)
 
 def plot_cflux(oidata, uvplot=False, legend=False, ploterror=False):
 
@@ -549,7 +549,7 @@ def plot_cflux(oidata, uvplot=False, legend=False, ploterror=False):
 
 
     if legend and uvplot: ax2.legend(prop={'size':10},numpoints=1)
-    print output
+    print(output)
 
 def plot_vis2(oidata, uvplot=False, legend=False, ploterror=False):
 
@@ -588,7 +588,7 @@ def plot_vis2(oidata, uvplot=False, legend=False, ploterror=False):
         if ploterror:
             line = ax1.errorbar(1e6*vis.wavelength.eff_wave, vis.vis2data, vis.vis2err, label=label, color=color)
         else:
-            print 1e6*vis.wavelength.eff_wave, vis.vis2data
+            print(1e6*vis.wavelength.eff_wave, vis.vis2data)
             line = ax1.plot(1e6*vis.wavelength.eff_wave, vis.vis2data, label=label, color=color)
         ymax=np.amax(np.append(vis.vis2data[np.where(vis.flag == False)], ymax))
         xmin=np.amin(np.append(1e6*vis.wavelength.eff_wave[np.where(vis.flag == False)], xmax))
@@ -597,7 +597,7 @@ def plot_vis2(oidata, uvplot=False, legend=False, ploterror=False):
             ax2.plot([-u,u],[-v,v], '.', label=label, color=color)
         names.append(vis.target.target)
         baselinemax = np.amax([np.sqrt(u**2+v**2), baselinemax])
-        print '%10s: %s, %5.2f m, %s'%(line[0].get_color(), label, np.sqrt(u**2+v**2), vis.timeobs)
+        print('%10s: %s, %5.2f m, %s'%(line[0].get_color(), label, np.sqrt(u**2+v**2), vis.timeobs))
 
     ax1.set_xlim(0.9*xmin,1.1*xmax)
     ax1.set_ylim(0,ymax)
@@ -624,17 +624,17 @@ def plot_vis2(oidata, uvplot=False, legend=False, ploterror=False):
 
 def print_vis(vis):
 
-    print "# %s %s %s"%(vis.target.target, vis.station[0].sta_name + vis.station[1].sta_name, vis.timeobs)
-    print "# u = %6.2f v = %6.2f"%(vis.ucoord, vis.vcoord)
-    print "# Wavelength (um)       "
-    print "#        |V|"
-    print "#                |V|_err"
+    print("# %s %s %s"%(vis.target.target, vis.station[0].sta_name + vis.station[1].sta_name, vis.timeobs))
+    print("# u = %6.2f v = %6.2f"%(vis.ucoord, vis.vcoord))
+    print("# Wavelength (um)       ")
+    print("#        |V|")
+    print("#                |V|_err")
 
     idx = list(np.where(vis.flag == False)[0])
     idx.reverse()
     
     for i in idx:
-        print "%6.3f %8.4f %8.4f"%(1e6*vis.wavelength.eff_wave[i], vis.visamp[i], vis.visamperr[i])
+        print("%6.3f %8.4f %8.4f"%(1e6*vis.wavelength.eff_wave[i], vis.visamp[i], vis.visamperr[i]))
 
 def plot_array(array, visibilities=None):
 
