@@ -5,9 +5,8 @@ This is a Python module for reading and writing OIFITS files.  The only file you
 need is `oifits.py`; everything else is supplementary.
 
 Note, OIFITS2 support is currently in development, although already mostly
-working.  If you need OIFITS2 support, you should see the
-[OIFITS2](https://github.com/pboley/oifits/tree/oifits2) branch of this
-repository.
+working.  At the moment, read support is complete, but write support is not yet
+implemented.
 
 The module was tested with Astropy 4.2 and numpy 1.19.2 under Python 3.8.5.
 Earlier versions will probably work, too.
@@ -152,6 +151,12 @@ Besides this, you should also refer to the appropriate tables in the documents
 defining the standard (see [references](#references)), as the names of many
 function arguments, tables, etc. are taken directly from there and not
 documented explicitly.
+
+## Acknowledgements
+
+OIFITS2 capabilities were implemented with the financial support of grant
+[18-72-10132](https://rscf.ru/en/project/18-72-10132/) of the [Russian Science
+Foundation](https://rscf.ru/en/).
 
 ## References
 
