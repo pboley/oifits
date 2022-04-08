@@ -1457,6 +1457,13 @@ class oifits(object):
 
         arraymap = {}
         stationmap = {}
+        revision = 1
+        # Check if any of the arrays or stations are higher than revision 1;
+        # save everything with highest revision used
+        for array in self.array.values():
+            if array.revision > revision: revision = array.revision
+            for station in array.station:
+                if station.revision > revision: revision = station.revision
         for arrname, array in self.array.items():
             arraymap[id(array)] = arrname
             tel_name = []
@@ -1464,6 +1471,8 @@ class oifits(object):
             sta_index = []
             diameter = []
             staxyz = []
+            fov = []
+            fovtype = []
             if array.station.size:
                 for i, station in enumerate(array.station, 1):
                     stationmap[id(station)] = i
@@ -1472,15 +1481,19 @@ class oifits(object):
                     sta_index.append(i)
                     diameter.append(station.diameter)
                     staxyz.append(station.staxyz)
-                hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
-                    fits.Column(name='TEL_NAME', format='16A', array=tel_name),
-                    fits.Column(name='STA_NAME', format='16A', array=sta_name),
-                    fits.Column(name='STA_INDEX', format='1I', array=sta_index),
-                    fits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
-                    fits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)
-                    )))
+                    fov.append(station.fov or 0) # Replace None with 0
+                    fovtype.append(station.fovtype or 'UNDEF') # Replace None with UNDEF
+                cols = [fits.Column(name='TEL_NAME', format='16A', array=tel_name),
+                        fits.Column(name='STA_NAME', format='16A', array=sta_name),
+                        fits.Column(name='STA_INDEX', format='1I', array=sta_index),
+                        fits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
+                        fits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)]
+                if revision >= 2:
+                    cols.append(fits.Column(name='FOV', format='D1', array=fov))
+                    cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
+                hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_ARRAY'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdu.header['ARRNAME'] = arrname, 'Array name, for cross-referencing'
             hdu.header['FRAME'] = array.frame, 'Coordinate frame'
             hdu.header['ARRAYX'] = array.arrxyz[0], 'Array center x coordinate (m)'
