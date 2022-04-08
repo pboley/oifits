@@ -1065,7 +1065,7 @@ class oifits(object):
         return not self.__eq__(other)
 
     def isvalid(self):
-        """Returns True of the oifits object is both consistent (as
+        """Returns True if the oifits object is both consistent (as
         determined by isconsistent()) and conforms to the OIFITS
         standard (according to Pauls et al., 2005, PASP, 117, 1255)."""
 
@@ -1379,7 +1379,7 @@ class oifits(object):
                 fits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
                 )))
             hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
             hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
             hdulist.append(hdu)
 
@@ -1402,6 +1402,8 @@ class oifits(object):
             parallax = []
             para_err = []
             spectyp = []
+            category = []
+            revision = 1
             for i, targ in enumerate(self.target):
                 key = i+1
                 targetmap[id(targ)] = key
@@ -1422,28 +1424,35 @@ class oifits(object):
                 parallax.append(targ.parallax)
                 para_err.append(targ.para_err)
                 spectyp.append(targ.spectyp)
+                category.append(targ.category or '') # Replace None with empty string
+                # Check if any of the targets are higher than revision 1; save
+                # everything with highest revision used
+                if targ.revision > revision: revision = targ.revision
 
-            hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
-                fits.Column(name='TARGET_ID', format='1I', array=target_id),
-                fits.Column(name='TARGET', format='16A', array=target),
-                fits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
-                fits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
-                fits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
-                fits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
-                fits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
-                fits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
-                fits.Column(name='VELTYP', format='8A', array=veltyp),
-                fits.Column(name='VELDEF', format='8A', array=veldef),
-                fits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
-                fits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
-                fits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
-                fits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
-                fits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
-                fits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
-                fits.Column(name='SPECTYP', format='16A', array=spectyp)
-                )))
+
+            cols = [fits.Column(name='TARGET_ID', format='1I', array=target_id),
+                    fits.Column(name='TARGET', format='16A', array=target),
+                    fits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
+                    fits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
+                    fits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
+                    fits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
+                    fits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
+                    fits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
+                    fits.Column(name='VELTYP', format='8A', array=veltyp),
+                    fits.Column(name='VELDEF', format='8A', array=veldef),
+                    fits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
+                    fits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
+                    fits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
+                    fits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
+                    fits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
+                    fits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
+                    fits.Column(name='SPECTYP', format='16A', array=spectyp)]
+            if revision >= 2:
+                cols.append(fits.Column(name='CATEGORY', format='3A', array=category))
+
+            hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_TARGET'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdulist.append(hdu)
 
         arraymap = {}
