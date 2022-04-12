@@ -315,6 +315,7 @@ class OI_VIS(object):
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
                  vcoord, wavelength, target, corr=None, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
                  # The follow arguments are used for OIFITS2
+                 corrindx_visamp=None, corrindx_visphi=None, corrindx_rvis=None, corrindx_ivis=None,
                  amptyp=None, phityp=None, amporder=None, phiorder=None,
                  visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None):
 
@@ -339,17 +340,21 @@ class OI_VIS(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
-        if revision >= 2:
-            self.amptyp = amptyp
-            self.phityp = phityp
-            self.amporder = amporder
-            self.phiorder = phiorder
-            self.visrefmap = visrefmap
-            self.rvis = rvis
-            self.rviserr = rviserr
-            self.ivis = ivis
-            self.iviserr = iviserr
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corrindx_visamp = corrindx_visamp
+        self.corrindx_visphi = corrindx_visphi
+        self.corrindx_rvis = corrindx_rvis
+        self.corrindx_ivis = corrindx_ivis
+        self.amptyp = amptyp
+        self.phityp = phityp
+        self.amporder = amporder
+        self.phiorder = phiorder
+        self.visrefmap = visrefmap
+        self.rvis = rvis
+        self.rviserr = rviserr
+        self.ivis = ivis
+        self.iviserr = iviserr
+        self.corr = corr
 
     def __eq__(self, other):
 
@@ -375,6 +380,10 @@ class OI_VIS(object):
         # Additional checks for OIFITS2
         if self.revision >= 2:
             eq = eq and not (
+                (self.corrindx_visamp != other.corrindx_visamp) or
+                (self.corrindx_visphi != other.corrindx_visphi) or
+                (self.corrindx_rvis   != other.corrindx_rvis) or
+                (self.corrindx_ivis   != other.corrindx_ivis) or
                 (self.amptyp     != other.amptyp)    or
                 (self.phityp     != other.phityp)    or
                 (self.amporder   != other.amporder)  or
@@ -429,7 +438,7 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, corr=None, array=None, station=(None, None), revision=1):
+                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
@@ -446,8 +455,9 @@ class OI_VIS2(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
-        if revision >= 2:
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corr = corr
+        self.corrindx_vis2data = corrindx_vis2data
 
     def __eq__(self, other):
 
@@ -511,7 +521,9 @@ class OI_T3(object):
     """
 
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
-                 v1coord, u2coord, v2coord, wavelength, target, corr=None, array=None, station=(None,None,None), revision=1):
+                 v1coord, u2coord, v2coord, wavelength, target, corr=None,
+                 corrindx_t3amp=None, corrindx_t3phi=None,
+                 array=None, station=(None,None,None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
@@ -532,8 +544,10 @@ class OI_T3(object):
         self.u2coord = u2coord
         self.v2coord = v2coord
         self.station = station
-        if revision >= 2:
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corr = corr
+        self.corrindx_t3amp = corrindx_t3amp
+        self.corrindx_t3phi = corrindx_t3phi
 
     def __eq__(self, other):
 
@@ -560,7 +574,9 @@ class OI_T3(object):
         # Additional checks for OIFITS2
         if self.revision >= 2:
             eq = eq and not (
-                (self.corr != other.corr))
+                (self.corr != other.corr) or
+                (self.corrindx_t3amp != other.corrindx_t3amp) or
+                (self.corrindx_t3phi != other.corrindx_t3phi))
 
         return eq
 
@@ -1369,9 +1385,9 @@ class oifits(object):
         # Add (new) advertisement
         hdu.header.add_comment('Written by OIFITS Python module version %s'%__version__)
         hdu.header.add_comment('https://github.com/pboley/oifits')
+        hdulist.append(hdu)
 
         wavelengthmap = {}
-        hdulist.append(hdu)
         for insname, wavelength in self.wavelength.items():
             wavelengthmap[id(wavelength)] = insname
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
@@ -1381,6 +1397,19 @@ class oifits(object):
             hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
             hdu.header['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
             hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
+            hdulist.append(hdu)
+
+        corrmap = {}
+        for corrname, corr in self.corr.items():
+            corrmap[id(corr)] = corrname
+            hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
+                fits.Column(name='IINDX', format='1J', array=corr.iindx),
+                fits.Column(name='JINDX', format='1J', array=corr.iindx),
+                fits.Column(name='CORR', format='D1', array=corr.corr)
+                )))
+            hdu.header['EXTNAME'] = 'OI_CORR'
+            hdu.header['OI_REVN'] = corr.revision, 'Revision number of the table definition'
+            hdu.header['CORRNAME'] = corrname
             hdulist.append(hdu)
 
         targetmap = {}
@@ -1582,12 +1611,14 @@ class oifits(object):
 
         if self.vis2.size:
             tables = {}
+            # Check if any of the vis2 tables are higher than revision 1; save
+            # everything with highest revision used
+            revision = 1
+            for vis in self.vis2:
+                if vis.revision > revision: revision = vis.revision
             for vis in self.vis2:
                 nwave = vis.wavelength.eff_wave.size
-                if vis.array:
-                    key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(vis.wavelength)])
+                key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)], corrmap[id(vis.corr)])
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1618,6 +1649,8 @@ class oifits(object):
                     data['sta_index'].append([stationmap[id(vis.station[0])], stationmap[id(vis.station[1])]])
                 else:
                     data['sta_index'].append([-1, -1])
+                if vis.corr:
+                    raise NotImplementedError('Writing correlation information from OI_VIS2 tables is not yet implemented')
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
@@ -1640,7 +1673,7 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS2'
-                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
@@ -1648,12 +1681,14 @@ class oifits(object):
 
         if self.t3.size:
             tables = {}
+            # Check if any of the t3 tables are higher than revision 1; save
+            # everything with highest revision used
+            revision = 1
+            for t3 in self.t3:
+                if t3.revision > revision: revision = t3.revision
             for t3 in self.t3:
                 nwave = t3.wavelength.eff_wave.size
-                if t3.array:
-                    key = (arraymap[id(t3.array)], wavelengthmap[id(t3.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(t3.wavelength)])
+                key = (arraymap[id(t3.array)], wavelengthmap[id(t3.wavelength)], corrmap[id(t3.corr)])
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1691,6 +1726,8 @@ class oifits(object):
                     data['sta_index'].append([stationmap[id(t3.station[0])], stationmap[id(t3.station[1])], stationmap[id(t3.station[2])]])
                 else:
                     data['sta_index'].append([-1, -1, -1])
+                if t3.corr:
+                    raise NotImplementedError('Writing correlation information from OI_T3 tables is not yet implemented')
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
@@ -1717,7 +1754,7 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_T3'
-                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
