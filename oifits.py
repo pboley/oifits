@@ -1845,6 +1845,7 @@ def open(filename, quiet=False):
         if hdu.name == 'OI_VIS':
             # OIFITS2 parameters which default to None for OIFITS1
             amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = corr = None
+            corrindx_visamp = corrindx_visphi = corrindx_rvis = corrindx_ivis = None
             if revision >= 2:
                 amptyp = header.get('AMPTYP')
                 phityp = header.get('PHITYP')
@@ -1885,15 +1886,29 @@ def open(filename, quiet=False):
                         ivis = row['IVIS']
                     if 'IVISERR' in data.names:
                         iviserr = row['IVISERR']
+                    if 'CORRINDX_VISAMP' in data.names:
+                        corrindx_visamp = row['CORRINDX_VISAMP']
+                    if 'CORRINDX_VISPHI' in data.names:
+                        corrindx_visphi = row['CORRINDX_VISPHI']
+                    if 'CORRINDX_RVIS' in data.names:
+                        corrindx_rvis = row['CORRINDX_RVIS']
+                    if 'CORRINDX_IVIS' in data.names:
+                        corrindx_ivis = row['CORRINDX_IVIS']
                 newobj.vis = np.append(newobj.vis, OI_VIS(timeobs=timeobs, int_time=int_time, visamp=visamp,
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
                                                           flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength, corr=corr,
                                                           target=target, array=array, station=station, cflux=cflux,
                                                           cfluxerr=cfluxerr, revision=revision,
+                                                          corrindx_visamp=corrindx_visamp, corrindx_visphi=corrindx_visphi,
+                                                          corrindx_rvis=corrindx_rvis, corrindx_ivis=corrindx_ivis,
                                                           amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
                                                           visrefmap=visrefmap,
                                                           rvis=rvis, rviserr=rviserr, ivis=ivis, iviserr=iviserr))
         elif hdu.name == 'OI_VIS2':
+            # OIFITS2 parameters which default to None for OIFITS1
+            corr = corrindx_vis2data = None
+            if revision >= 2:
+                corr = newobj.corr.get(corrname)
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1903,10 +1918,6 @@ def open(filename, quiet=False):
                 ucoord = row['UCOORD']
                 vcoord = row['VCOORD']
                 target = targetmap[row['TARGET_ID']]
-                if revision >= 2:
-                    corr = newobj.corr.get(corrname)
-                else:
-                    corr = None
                 if array:
                     sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
@@ -1914,11 +1925,20 @@ def open(filename, quiet=False):
                     station = [s1, s2]
                 else:
                     station = [None, None]
+                # Optional OIFITS2 values
+                if revision >= 2:
+                    if 'CORRINDX_VIS2DATA' in data.names:
+                        corrindx_vis2data = row['CORRINDX_VIS2DATA']
                 newobj.vis2 = np.append(newobj.vis2, OI_VIS2(timeobs=timeobs, int_time=int_time, vis2data=vis2data,
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
-                                                             wavelength=wavelength, corr=corr, target=target, array=array,
+                                                             wavelength=wavelength, corr=corr, corrindx_vis2data=corrindx_vis2data,
+                                                             target=target, array=array,
                                                              station=station, revision=revision))
         elif hdu.name == 'OI_T3':
+            # OIFITS2 parameters which default to None for OIFITS1
+            corr = corrindx_t3amp = corrindx_t3phi = None
+            if revision >= 2:
+                corr = newobj.corr.get(corrname)
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1941,14 +1961,16 @@ def open(filename, quiet=False):
                 else:
                     station = [None, None, None]
                 if revision >= 2:
-                    corr = newobj.corr.get(corrname)
-                else:
-                    corr = None
+                    if 'CORRINDX_T3AMP' in data.names:
+                        corrindx_t3amp = row['CORRINDX_T3AMP']
+                    if 'CORRINDX_T3PHI' in data.names:
+                        corrindx_t3phi = row['CORRINDX_T3PHI']
                 newobj.t3 = np.append(newobj.t3, OI_T3(timeobs=timeobs, int_time=int_time, t3amp=t3amp,
                                                        t3amperr=t3amperr, t3phi=t3phi, t3phierr=t3phierr,
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
-                                                       v2coord=v2coord, wavelength=wavelength, corr=corr, target=target,
-                                                       array=array, station=station, revision=revision))
+                                                       v2coord=v2coord, wavelength=wavelength, corr=corr,
+                                                       corrindx_t3amp=corrindx_t3amp, corrindx_t3phi=corrindx_t3phi,
+                                                       target=target, array=array, station=station, revision=revision))
         elif hdu.name == 'OI_FLUX':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
