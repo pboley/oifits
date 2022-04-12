@@ -1538,9 +1538,7 @@ class oifits(object):
             for vis in self.vis:
                 nwave = vis.wavelength.eff_wave.size
                 if vis.array:
-                    key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(vis.wavelength)])
+                    key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)))
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1618,7 +1616,7 @@ class oifits(object):
                 if vis.revision > revision: revision = vis.revision
             for vis in self.vis2:
                 nwave = vis.wavelength.eff_wave.size
-                key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)], corrmap[id(vis.corr)])
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)))
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1688,7 +1686,7 @@ class oifits(object):
                 if t3.revision > revision: revision = t3.revision
             for t3 in self.t3:
                 nwave = t3.wavelength.eff_wave.size
-                key = (arraymap[id(t3.array)], wavelengthmap[id(t3.wavelength)], corrmap[id(t3.corr)])
+                key = (arraymap.get(id(t3.array)), wavelengthmap.get(id(t3.wavelength)), corrmap.get(id(t3.corr)))
                 if key in tables.keys():
                     data = tables[key]
                 else:
