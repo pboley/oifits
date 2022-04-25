@@ -1757,6 +1757,60 @@ class oifits(object):
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
+        if self.flux.size:
+            tables = {}
+            revision = 1
+            for flux in self.flux:
+                nwave = flux.wavelength.eff_wave.size
+                key = (arraymap.get(id(flux.array)), wavelengthmap.get(id(flux.wavelength)), corrmap.get(id(flux.corr)), flux.fov, flux.fovtype, flux.calibrated)
+                if key in tables.keys():
+                    data = tables[key]
+                else:
+                    data = tables[key] = {'target_id':[], 'mjd':[], 'int_time':[],
+                                          'fluxdata':[], 'fluxerr':[],
+                                          'sta_index':[], 'flag':[]}
+                data['target_id'].append(targetmap[id(flux.target)])
+                mjd = (flux.timeobs - _mjdzero).days + (flux.timeobs - _mjdzero).seconds / 3600.0 / 24.0
+                data['mjd'].append(mjd)
+                data['int_time'].append(flux.int_time)
+                if nwave == 1:
+                    data['fluxdata'].append(flux.fluxdata[0])
+                    data['fluxerr'].append(flux.fluxerr[0])
+                    data['flag'].append(flux.flag[0])
+                else:
+                    data['fluxdata'].append(flux.fluxdata)
+                    data['fluxerr'].append(flux.fluxerr)
+                    data['flag'].append(flux.flag)
+                if flux.station:
+                    data['sta_index'].append(stationmap[id(flux.station)])
+                else:
+                    data['sta_index'].append(-1)
+                if flux.corr:
+                    raise NotImplementedError('Writing correlation information from OI_FLUX tables is not yet implemented')
+                for key in tables.keys():
+                    data = tables[key]
+                    nwave = self.wavelength[key[1]].eff_wave.size
+
+                    hdu = fits.BinTableHDU.from_columns(fits.ColDefs([
+                        fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
+                        fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
+                        fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
+                        fits.Column(name='FLUXDATA', format='%dD'%nwave, array=data['fluxdata']),
+                        fits.Column(name='FLUXERR', format='%dD'%nwave, array=data['fluxerr']),
+                        fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1),
+                        fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
+                        ]))
+                    hdu.header['EXTNAME'] = 'OI_FLUX'
+                    hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
+                    hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                    hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                    if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
+                    if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                    if key[3]: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
+                    if key[4]: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
+                    if key[5]: hdu.header['CALSTAT'] = 'C', 'Calibration status'
+                    else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
+                    hdulist.append(hdu)
 
         hdulist.writeto(filename, overwrite=True)
 
