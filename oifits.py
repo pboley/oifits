@@ -1888,15 +1888,16 @@ def open(filename, quiet=False):
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
             # Check if this file was written with an older verison (<0.5) of the module
             # and needs to have arrxyz positions fixed due to changing to ITRS
-            for i, comment in enumerate(hdulist[0].header['COMMENT']):
-                if 'Written by OIFITS Python module' in str(comment):
-                    if version.parse(comment.split()[-1]) < version.parse('0.5-dev'):
-                        warnings.warn('Changing array center coordinates to ITRS', UserWarning)
-                        oldheight = (np.sqrt((arrxyz**2).sum())-6378100.0)*u.m # lat/long are unchanged, but height is different
-                        c = EarthLocation(*arrxyz*u.m)
-                        c = EarthLocation(lat=c.lat, lon=c.lon, height=oldheight)
-                        arrxyz = np.array([c.value[0], c.value[1], c.value[2]]) # c.value is numpy.void, which causes problems
-                    break
+            if arrname == 'VLTI':
+                for i, comment in enumerate(hdulist[0].header['COMMENT']):
+                    if 'Written by OIFITS Python module' in str(comment):
+                        if version.parse(comment.split()[-1]) < version.parse('0.5-dev'):
+                            warnings.warn('Changing array center coordinates to ITRS', UserWarning)
+                            oldheight = (np.sqrt((arrxyz**2).sum())-6378100.0)*u.m # lat/long are unchanged, but height is different
+                            c = EarthLocation(*arrxyz*u.m)
+                            c = EarthLocation(lat=c.lat, lon=c.lon, height=oldheight)
+                            arrxyz = np.array([c.value[0], c.value[1], c.value[2]]) # c.value is numpy.void, which causes problems
+                        break
             newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision)
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
