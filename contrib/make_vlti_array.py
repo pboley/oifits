@@ -1,15 +1,16 @@
 import numpy as np
 from numpy import sin, cos, pi, sqrt
 import oifits
+from astropy.coordinates import EarthLocation
+import astropy.units as u
 
 # Coordinates of array center
-longitude=-70.40479659*pi/180.0
-latitude=-24.62794830*pi/180.0
-R=2635.0+6378100.0
+longitude=-70.40479659*u.deg
+latitude=-24.62794830*u.deg
+R=2635.0*u.m
 
-arrxyz = np.array([R*cos(latitude)*cos(longitude),
-                   R*cos(latitude)*sin(longitude),
-                   R*sin(latitude)])
+c = EarthLocation(lat=latitude, lon=longitude, height=R)
+arrxyz = np.array([c.value[0], c.value[1], c.value[2]]) # c.value is numpy.void, which causes problems
 
 arrayx, arrayy, arrayz = arrxyz
 
