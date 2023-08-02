@@ -84,18 +84,18 @@ on Github (https://github.com/pboley/oifits/).
 
 import numpy as np
 from numpy import double, ma
-try:
-    from astropy.io import fits
-except ImportError:
-    import pyfits as fits
+from astropy.io import fits
+import astropy.units as u
+from astropy.coordinates import EarthLocation
 import datetime
 import copy
 import warnings
+from packaging import version
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='13 January 2021'
-__version__ = '0.4-dev'
+__date__ ='2 August 2023'
+__version__ = '0.5-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -812,27 +812,26 @@ class OI_ARRAY(object):
 
     def __getattr__(self, attrname):
         if attrname == 'latitude':
-            radius = np.sqrt((self.arrxyz**2).sum())
-            # FIXME -- radius can (and should) be 0 for SKY frame
-            if radius == 0.0:
-                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
+            if self.frame == 'GEOCENTRIC':
+                c = EarthLocation(*self.arrxyz*u.m)
+                return _angpoint(c.lat.value)
+            else:
+                warnings.warn('Latitude only defined for geocentric coordinates', UserWarning)
                 return _angpoint(np.nan)
-            return _angpoint(np.arcsin(self.arrxyz[2]/radius)*180.0/np.pi)
         elif attrname == 'longitude':
-            radius = np.sqrt((self.arrxyz**2).sum())
-            # FIXME -- radius can (and should) be 0 for SKY frame
-            if radius == 0.0:
-                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
+            if self.frame == 'GEOCENTRIC':
+                c = EarthLocation(*self.arrxyz*u.m)
+                return _angpoint(c.lon.value)
+            else:
+                warnings.warn('Longitude only defined for geocentric coordinates', UserWarning)
                 return _angpoint(np.nan)
-            xylen = np.sqrt(self.arrxyz[0]**2+self.arrxyz[1]**2)
-            return _angpoint(np.arcsin(self.arrxyz[1]/xylen)*180.0/np.pi)
         elif attrname == 'altitude':
-            radius = np.sqrt((self.arrxyz**2).sum())
-            # FIXME -- radius can (and should) be 0 for SKY frame
-            if radius == 0.0:
-                warnings.warn('Warning: ARRAYX, ARRAYY, ARRAYZ are all zero', UserWarning)
-                return _angpoint(np.nan)
-            return radius - 6378100.0
+            if self.frame == 'GEOCENTRIC':
+                c = EarthLocation(*self.arrxyz*u.m)
+                return c.height.value
+            else:
+                warnings.warn('Height only defined for geocentric coordinates', UserWarning)
+                return np.nan
         else:
             raise AttributeError(attrname)
 
@@ -1757,6 +1756,17 @@ def open(filename, quiet=False):
             arrname = header['ARRNAME']
             frame = header['FRAME']
             arrxyz = np.array([header['ARRAYX'], header['ARRAYY'], header['ARRAYZ']])
+            # Check if this file was written with an older verison (<0.5) of the module
+            # and needs to have arrxyz positions fixed due to changing to ITRS
+            for i, comment in enumerate(hdulist[0].header['COMMENT']):
+                if 'Written by OIFITS Python module' in str(comment):
+                    if version.parse(comment.split()[-1]) < version.parse('0.5-dev'):
+                        warnings.warn('Changing array center coordinates to ITRS', UserWarning)
+                        oldheight = (np.sqrt((arrxyz**2).sum())-6378100.0)*u.m # lat/long are unchanged, but height is different
+                        c = EarthLocation(*arrxyz*u.m)
+                        c = EarthLocation(lat=c.lat, lon=c.lon, height=oldheight)
+                        arrxyz = np.array([c.value[0], c.value[1], c.value[2]]) # c.value is numpy.void, which causes problems
+                    break
             newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision)
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
