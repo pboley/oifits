@@ -1548,8 +1548,7 @@ class oifits(object):
                 if vis.revision > revision: revision = vis.revision
             for vis in self.vis:
                 nwave = vis.wavelength.eff_wave.size
-                if vis.array:
-                    key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp)
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp)
                 if key in tables.keys():
                     data = tables[key]
                 else:
