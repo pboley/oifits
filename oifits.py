@@ -177,7 +177,7 @@ def _notnone(x):
 class OI_TARGET(object):
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
-                 sysvel=0.0, veltyp='TOPCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
+                 sysvel=0.0, veltyp='TOPOCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
                  pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN', category=None, revision=1):
 
         if revision > 2:
