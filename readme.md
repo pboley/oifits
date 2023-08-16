@@ -6,7 +6,9 @@ need is `oifits.py`; everything else is supplementary.
 
 Note, OIFITS2 support is currently in development, although already mostly
 working.  At the moment, read support is complete, but write support is not yet
-implemented.
+implemented in the master branch; *however*, the [write
+branch](https://github.com/pboley/oifits/tree/write) seems to be mostly
+working; please check it out if you require write support for OIFITS2 files.
 
 The module was tested with Astropy 4.2 and numpy 1.19.2 under Python 3.8.5.
 Earlier versions will probably work, too.
