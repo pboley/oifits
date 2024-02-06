@@ -109,6 +109,8 @@ def _plurals(count):
 def _array_eq(a, b):
     "Test whether all the elements of two arrays are equal."
 
+    if len(a) != len(b):
+        return False
     try:
         return not (a != b).any()
     except:
