@@ -623,7 +623,7 @@ class OI_FLUX(object):
     """
 
     def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
-                 wavelength, target, calibrated, corr=None, array=None, station=None,
+                 wavelength, target, calibrated, fluxunit, fluxerrunit, corr=None, array=None, station=None,
                  fov=None, fovtype=None, revision=1):
 
         if revision > 1:
@@ -643,24 +643,28 @@ class OI_FLUX(object):
         self.fov = fov
         self.fovtype = fovtype
         self.calibrated = calibrated
+        self.fluxunit = fluxunit
+        self.fluxerrunit = fluxerrunit
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
         return not (
-            (self.revision   != other.revision)   or
-            (self.timeobs    != other.timeobs)    or
-            (self.array      != other.array)      or
-            (self.wavelength != other.wavelength) or
-            (self.corr       != other.corr)       or
-            (self.target     != other.target)     or
-            (self.int_time   != other.int_time)   or
-            (self.array      != other.array)      or
-            (self.station    != other.station)    or
-            (self.fov        != other.fov)        or
-            (self.fovtype    != other.fovtype)    or
-            (self.calibrated != other.calibrated) or
+            (self.revision    != other.revision)    or
+            (self.timeobs     != other.timeobs)     or
+            (self.array       != other.array)       or
+            (self.wavelength  != other.wavelength)  or
+            (self.corr        != other.corr)        or
+            (self.target      != other.target)      or
+            (self.int_time    != other.int_time)    or
+            (self.array       != other.array)       or
+            (self.station     != other.station)     or
+            (self.fov         != other.fov)         or
+            (self.fovtype     != other.fovtype)     or
+            (self.calibrated  != other.calibrated)  or
+            (self.fluxunit    != other.fluxunit)    or
+            (self.fluxerrunit != other.fluxerrunit) or
             (not _array_eq(self._fluxdata, other._fluxdata)) or
             (not _array_eq(self._fluxerr, other._fluxerr)) or
             (not _array_eq(self.flag, other.flag)))
@@ -1807,24 +1811,26 @@ class oifits(object):
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
+                
+                cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
+                       fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
+                       fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
+                       fits.Column(name='FLUXDATA', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxdata']),
+                       fits.Column(name='FLUXERR', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxerr'])]
+                # Station should only be present for 'uncalibrated' spectra
+                if not flux.calibrated:
+                    cols += [fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1)]
+                cols += [fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])]
+                hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
 
-                hdu = fits.BinTableHDU.from_columns(fits.ColDefs([
-                    fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                    fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
-                    fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
-                    fits.Column(name='FLUXDATA', format='%dD'%nwave, array=data['fluxdata']),
-                    fits.Column(name='FLUXERR', format='%dD'%nwave, array=data['fluxerr']),
-                    fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1),
-                    fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
-                    ]))
                 hdu.header['EXTNAME'] = 'OI_FLUX'
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
+                if key[0] and not flux.calibrated: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
-                if key[3]: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
-                if key[4]: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
+                if key[3] and flux.calibrated: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
+                if key[4] and flux.calibrated: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
                 if key[5]: hdu.header['CALSTAT'] = 'C', 'Calibration status'
                 else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
                 hdulist.append(hdu)
@@ -2073,6 +2079,8 @@ def open(filename, quiet=False):
                 fov = header.get('FOV')
                 fovtype = header.get('FOVTYPE')
                 corr = newobj.corr.get(corrname)
+                fluxunit = data.columns['FLUXDATA'].unit
+                fluxerrunit = data.columns['FLUXERR'].unit
                 if header['CALSTAT'] == 'C':
                     calibrated = True
                 else:
@@ -2087,7 +2095,8 @@ def open(filename, quiet=False):
                                         fluxdata=fluxdata, fluxerr=fluxerr, flag=flag,
                                         wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
-                                        fov=fov, fovtype=fovtype, revision=revision))
+                                        fov=fov, fovtype=fovtype, fluxunit=fluxunit, fluxerrunit=fluxerrunit,
+                                        revision=revision))
         elif hdu.name == 'OI_INSPOL':
             for row in data:
                 target = targetmap[row['TARGET_ID']]
