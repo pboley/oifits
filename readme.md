@@ -143,6 +143,31 @@ reuse it as needed.
 If your OIFITS object is at least *consistent*, it can be written to a FITS file
 using the `save()` method.
 
+## How to deal with non-conforming (broken) files
+
+OIFITS files produced by the current version of the GRAVITY pipeline are known
+to be broken: the `OI_ARRAY` tables are listed as conforming to OIFITS2
+(`OI_REVN=2`), although they are missing the FOV and FOVTYPE columns.
+Additionally, the `OI_FLUX` tables contain the flux measurements in the FLUX
+column, instead of FLUXDATA. To fix the first problem, you can edit
+the header of your file on-the-fly before trying to load it:
+
+```python
+from astropy.io import fits
+import oifits
+hdulist = fits.open('foo.fits')
+hdulist['OI_ARRAY'].header['OI_REVN'] = 1
+oifitsobj = oifits.open(hdulist)
+```
+
+The problem with the FLUX/FLUXDATA error is a little more tricky, so the module
+handles it gracefully and warns you. Other errors in conforming to the OIFITS
+standards (e.g. DATE-OBS containing a date and time, instead of just a date;
+both MATISSE and GRAVITY make this mistake) are handled gracefully when
+possible, however if you see warnings I would encourage you to open a bug
+report with the software generating broken files.
+
+
 ## Documentation
 
 The API documentation is contained within the module itself in the form of
