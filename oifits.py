@@ -812,10 +812,16 @@ class OI_ARRAY(object):
         # OI_STATION constructor as None for OIFITS1.
         fov = fovtype = None
         for station in stations:
+            # Go field by field, since some OIFITS files have "extra" fields
+            tel_name = station['TEL_NAME']
+            sta_name = station['STA_NAME']
+            sta_index = station['STA_INDEX']
+            diameter = station['DIAMETER']
+            staxyz = station['STAXYZ']
             if revision >= 2:
-                tel_name, sta_name, sta_index, diameter, staxyz, fov, fovtype = station
-            else:
-                tel_name, sta_name, sta_index, diameter, staxyz = station
+                fov = station['FOV']
+                fovtype = station['FOVTYPE']
+
             self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz, fov=fov, fovtype=fovtype, revision=revision))
 
     def __eq__(self, other):
@@ -2074,14 +2080,22 @@ def open(filename, quiet=False):
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
-                fluxdata = np.reshape(row['FLUXDATA'], -1)
+                try:
+                    fluxdata = np.reshape(row['FLUXDATA'], -1)
+                except KeyError:
+                    fluxdata = np.reshape(row['FLUX'], -1)
+                    warnings.warn('Warning: This file does not conform to the OIFITS2 standard: OI_FLUX contains flux data in FLUX. Correcting to FLUXDATA.', UserWarning)
                 fluxerr = np.reshape(row['FLUXERR'], -1)
                 flag = np.reshape(row['FLAG'], -1)
                 target = targetmap[row['TARGET_ID']]
                 fov = header.get('FOV')
                 fovtype = header.get('FOVTYPE')
                 corr = newobj.corr.get(corrname)
-                fluxunit = data.columns['FLUXDATA'].unit
+                try:
+                    fluxunit = data.columns['FLUXDATA'].unit
+                except KeyError:
+                    fluxunit = data.columns['FLUX'].unit
+                    warnings.warn('Warning: This file does not conform to the OIFITS2 standard: OI_FLUX contains flux data in FLUX. Correcting to FLUXDATA.', UserWarning)
                 fluxerrunit = data.columns['FLUXERR'].unit
                 if header['CALSTAT'] == 'C':
                     calibrated = True
