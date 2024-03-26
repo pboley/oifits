@@ -109,6 +109,8 @@ def _plurals(count):
 def _array_eq(a, b):
     "Test whether all the elements of two arrays are equal."
 
+    if len(a) != len(b):
+        return False
     try:
         return not (a != b).any()
     except:
@@ -177,7 +179,7 @@ def _notnone(x):
 class OI_TARGET(object):
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
-                 sysvel=0.0, veltyp='TOPCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
+                 sysvel=0.0, veltyp='TOPOCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
                  pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN', category=None, revision=1):
 
         if revision > 2:
@@ -315,7 +317,9 @@ class OI_VIS(object):
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
                  vcoord, wavelength, target, corr=None, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
                  # The follow arguments are used for OIFITS2
+                 corrindx_visamp=None, corrindx_visphi=None, corrindx_rvis=None, corrindx_ivis=None,
                  amptyp=None, phityp=None, amporder=None, phiorder=None,
+                 ampunit=None, rvisunit=None, ivisunit=None,
                  visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None):
 
         if revision > 2:
@@ -339,17 +343,24 @@ class OI_VIS(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
-        if revision >= 2:
-            self.amptyp = amptyp
-            self.phityp = phityp
-            self.amporder = amporder
-            self.phiorder = phiorder
-            self.visrefmap = visrefmap
-            self.rvis = rvis
-            self.rviserr = rviserr
-            self.ivis = ivis
-            self.iviserr = iviserr
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corrindx_visamp = corrindx_visamp
+        self.corrindx_visphi = corrindx_visphi
+        self.corrindx_rvis = corrindx_rvis
+        self.corrindx_ivis = corrindx_ivis
+        self.amptyp = amptyp
+        self.phityp = phityp
+        self.amporder = amporder
+        self.phiorder = phiorder
+        self.ampunit = ampunit
+        self.rvisunit = rvisunit
+        self.ivisunit = ivisunit
+        self.visrefmap = visrefmap
+        self.rvis = rvis
+        self.rviserr = rviserr
+        self.ivis = ivis
+        self.iviserr = iviserr
+        self.corr = corr
 
     def __eq__(self, other):
 
@@ -375,11 +386,18 @@ class OI_VIS(object):
         # Additional checks for OIFITS2
         if self.revision >= 2:
             eq = eq and not (
+                (self.corrindx_visamp != other.corrindx_visamp) or
+                (self.corrindx_visphi != other.corrindx_visphi) or
+                (self.corrindx_rvis   != other.corrindx_rvis) or
+                (self.corrindx_ivis   != other.corrindx_ivis) or
                 (self.amptyp     != other.amptyp)    or
                 (self.phityp     != other.phityp)    or
                 (self.amporder   != other.amporder)  or
                 (self.phiorder   != other.phiorder)  or
                 (self.corr       != other.corr)      or
+                (self.ampunit    != other.ampunit)   or
+                (self.rvisunit   != other.rvisunit)  or
+                (self.ivisunit   != other.ivisunit)  or
                 (not _array_eq(self.visrefmap, other.visrefmap)) or
                 (not _array_eq(self.rvis, other.rvis))           or
                 (not _array_eq(self.rviserr, other.rviserr))     or
@@ -429,7 +447,7 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, corr=None, array=None, station=(None, None), revision=1):
+                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
@@ -446,8 +464,9 @@ class OI_VIS2(object):
         self.ucoord = ucoord
         self.vcoord = vcoord
         self.station = station
-        if revision >= 2:
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corr = corr
+        self.corrindx_vis2data = corrindx_vis2data
 
     def __eq__(self, other):
 
@@ -511,7 +530,9 @@ class OI_T3(object):
     """
 
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
-                 v1coord, u2coord, v2coord, wavelength, target, corr=None, array=None, station=(None,None,None), revision=1):
+                 v1coord, u2coord, v2coord, wavelength, target, corr=None,
+                 corrindx_t3amp=None, corrindx_t3phi=None,
+                 array=None, station=(None,None,None), revision=1):
 
         if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
@@ -532,8 +553,10 @@ class OI_T3(object):
         self.u2coord = u2coord
         self.v2coord = v2coord
         self.station = station
-        if revision >= 2:
-            self.corr = corr
+        # Only used if revision >= 2
+        self.corr = corr
+        self.corrindx_t3amp = corrindx_t3amp
+        self.corrindx_t3phi = corrindx_t3phi
 
     def __eq__(self, other):
 
@@ -560,7 +583,9 @@ class OI_T3(object):
         # Additional checks for OIFITS2
         if self.revision >= 2:
             eq = eq and not (
-                (self.corr != other.corr))
+                (self.corr != other.corr) or
+                (self.corrindx_t3amp != other.corrindx_t3amp) or
+                (self.corrindx_t3phi != other.corrindx_t3phi))
 
         return eq
 
@@ -600,7 +625,7 @@ class OI_FLUX(object):
     """
 
     def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
-                 wavelength, target, calibrated, corr=None, array=None, station=None,
+                 wavelength, target, calibrated, fluxunit, fluxerrunit, corr=None, array=None, station=None,
                  fov=None, fovtype=None, revision=1):
 
         if revision > 1:
@@ -620,24 +645,28 @@ class OI_FLUX(object):
         self.fov = fov
         self.fovtype = fovtype
         self.calibrated = calibrated
+        self.fluxunit = fluxunit
+        self.fluxerrunit = fluxerrunit
 
     def __eq__(self, other):
 
         if type(self) != type(other): return False
 
         return not (
-            (self.revision   != other.revision)   or
-            (self.timeobs    != other.timeobs)    or
-            (self.array      != other.array)      or
-            (self.wavelength != other.wavelength) or
-            (self.corr       != other.corr)       or
-            (self.target     != other.target)     or
-            (self.int_time   != other.int_time)   or
-            (self.array      != other.array)      or
-            (self.station    != other.station)    or
-            (self.fov        != other.fov)        or
-            (self.fovtype    != other.fovtype)    or
-            (self.calibrated != other.calibrated) or
+            (self.revision    != other.revision)    or
+            (self.timeobs     != other.timeobs)     or
+            (self.array       != other.array)       or
+            (self.wavelength  != other.wavelength)  or
+            (self.corr        != other.corr)        or
+            (self.target      != other.target)      or
+            (self.int_time    != other.int_time)    or
+            (self.array       != other.array)       or
+            (self.station     != other.station)     or
+            (self.fov         != other.fov)         or
+            (self.fovtype     != other.fovtype)     or
+            (self.calibrated  != other.calibrated)  or
+            (self.fluxunit    != other.fluxunit)    or
+            (self.fluxerrunit != other.fluxerrunit) or
             (not _array_eq(self._fluxdata, other._fluxdata)) or
             (not _array_eq(self._fluxerr, other._fluxerr)) or
             (not _array_eq(self.flag, other.flag)))
@@ -783,10 +812,16 @@ class OI_ARRAY(object):
         # OI_STATION constructor as None for OIFITS1.
         fov = fovtype = None
         for station in stations:
+            # Go field by field, since some OIFITS files have "extra" fields
+            tel_name = station['TEL_NAME']
+            sta_name = station['STA_NAME']
+            sta_index = station['STA_INDEX']
+            diameter = station['DIAMETER']
+            staxyz = station['STAXYZ']
             if revision >= 2:
-                tel_name, sta_name, sta_index, diameter, staxyz, fov, fovtype = station
-            else:
-                tel_name, sta_name, sta_index, diameter, staxyz = station
+                fov = station['FOV']
+                fovtype = station['FOVTYPE']
+
             self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz, fov=fov, fovtype=fovtype, revision=revision))
 
     def __eq__(self, other):
@@ -1064,7 +1099,7 @@ class oifits(object):
         return not self.__eq__(other)
 
     def isvalid(self):
-        """Returns True of the oifits object is both consistent (as
+        """Returns True if the oifits object is both consistent (as
         determined by isconsistent()) and conforms to the OIFITS
         standard (according to Pauls et al., 2005, PASP, 117, 1255)."""
 
@@ -1368,9 +1403,9 @@ class oifits(object):
         # Add (new) advertisement
         hdu.header.add_comment('Written by OIFITS Python module version %s'%__version__)
         hdu.header.add_comment('https://github.com/pboley/oifits')
+        hdulist.append(hdu)
 
         wavelengthmap = {}
-        hdulist.append(hdu)
         for insname, wavelength in self.wavelength.items():
             wavelengthmap[id(wavelength)] = insname
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
@@ -1378,8 +1413,21 @@ class oifits(object):
                 fits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
                 )))
             hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
             hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
+            hdulist.append(hdu)
+
+        corrmap = {}
+        for corrname, corr in self.corr.items():
+            corrmap[id(corr)] = corrname
+            hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
+                fits.Column(name='IINDX', format='1J', array=corr.iindx),
+                fits.Column(name='JINDX', format='1J', array=corr.iindx),
+                fits.Column(name='CORR', format='D1', array=corr.corr)
+                )))
+            hdu.header['EXTNAME'] = 'OI_CORR'
+            hdu.header['OI_REVN'] = corr.revision, 'Revision number of the table definition'
+            hdu.header['CORRNAME'] = corrname
             hdulist.append(hdu)
 
         targetmap = {}
@@ -1401,6 +1449,8 @@ class oifits(object):
             parallax = []
             para_err = []
             spectyp = []
+            category = []
+            revision = 1
             for i, targ in enumerate(self.target):
                 key = i+1
                 targetmap[id(targ)] = key
@@ -1421,32 +1471,46 @@ class oifits(object):
                 parallax.append(targ.parallax)
                 para_err.append(targ.para_err)
                 spectyp.append(targ.spectyp)
+                category.append(targ.category or '') # Replace None with empty string
+                # Check if any of the targets are higher than revision 1; save
+                # everything with highest revision used
+                if targ.revision > revision: revision = targ.revision
 
-            hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
-                fits.Column(name='TARGET_ID', format='1I', array=target_id),
-                fits.Column(name='TARGET', format='16A', array=target),
-                fits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
-                fits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
-                fits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
-                fits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
-                fits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
-                fits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
-                fits.Column(name='VELTYP', format='8A', array=veltyp),
-                fits.Column(name='VELDEF', format='8A', array=veldef),
-                fits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
-                fits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
-                fits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
-                fits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
-                fits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
-                fits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
-                fits.Column(name='SPECTYP', format='16A', array=spectyp)
-                )))
+
+            cols = [fits.Column(name='TARGET_ID', format='1I', array=target_id),
+                    fits.Column(name='TARGET', format='16A', array=target),
+                    fits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
+                    fits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
+                    fits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
+                    fits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
+                    fits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
+                    fits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
+                    fits.Column(name='VELTYP', format='8A', array=veltyp),
+                    fits.Column(name='VELDEF', format='8A', array=veldef),
+                    fits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
+                    fits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
+                    fits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
+                    fits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
+                    fits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
+                    fits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
+                    fits.Column(name='SPECTYP', format='16A', array=spectyp)]
+            if revision >= 2:
+                cols.append(fits.Column(name='CATEGORY', format='3A', array=category))
+
+            hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_TARGET'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdulist.append(hdu)
 
         arraymap = {}
         stationmap = {}
+        revision = 1
+        # Check if any of the arrays or stations are higher than revision 1;
+        # save everything with highest revision used
+        for array in self.array.values():
+            if array.revision > revision: revision = array.revision
+            for station in array.station:
+                if station.revision > revision: revision = station.revision
         for arrname, array in self.array.items():
             arraymap[id(array)] = arrname
             tel_name = []
@@ -1454,6 +1518,8 @@ class oifits(object):
             sta_index = []
             diameter = []
             staxyz = []
+            fov = []
+            fovtype = []
             if array.station.size:
                 for i, station in enumerate(array.station, 1):
                     stationmap[id(station)] = i
@@ -1462,15 +1528,19 @@ class oifits(object):
                     sta_index.append(i)
                     diameter.append(station.diameter)
                     staxyz.append(station.staxyz)
-                hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
-                    fits.Column(name='TEL_NAME', format='16A', array=tel_name),
-                    fits.Column(name='STA_NAME', format='16A', array=sta_name),
-                    fits.Column(name='STA_INDEX', format='1I', array=sta_index),
-                    fits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
-                    fits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)
-                    )))
+                    fov.append(station.fov or 0) # Replace None with 0
+                    fovtype.append(station.fovtype or 'UNDEF') # Replace None with UNDEF
+                cols = [fits.Column(name='TEL_NAME', format='16A', array=tel_name),
+                        fits.Column(name='STA_NAME', format='16A', array=sta_name),
+                        fits.Column(name='STA_INDEX', format='1I', array=sta_index),
+                        fits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
+                        fits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)]
+                if revision >= 2:
+                    cols.append(fits.Column(name='FOV', format='D1', array=fov))
+                    cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
+                hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_ARRAY'
-            hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdu.header['ARRNAME'] = arrname, 'Array name, for cross-referencing'
             hdu.header['FRAME'] = array.frame, 'Coordinate frame'
             hdu.header['ARRAYX'] = array.arrxyz[0], 'Array center x coordinate (m)'
@@ -1483,12 +1553,14 @@ class oifits(object):
             # observations which have the same ARRNAME and INSNAME are
             # put into a single FITS binary table.
             tables = {}
+            # Check if any of the vis tables are higher than revision 1; save
+            # everything with highest revision used
+            revision = 1
+            for vis in self.vis:
+                if vis.revision > revision: revision = vis.revision
             for vis in self.vis:
                 nwave = vis.wavelength.eff_wave.size
-                if vis.array:
-                    key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(vis.wavelength)])
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1529,21 +1601,24 @@ class oifits(object):
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
-
-                hdu = fits.BinTableHDU.from_columns(fits.ColDefs([
-                    fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                    fits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
-                    fits.Column(name='MJD', unit='DAY', format='1D', array=data['mjd']),
-                    fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time']),
-                    fits.Column(name='VISAMP', format='%dD'%nwave, array=data['visamp']),
-                    fits.Column(name='VISAMPERR', format='%dD'%nwave, array=data['visamperr']),
-                    fits.Column(name='VISPHI', unit='DEGREES', format='%dD'%nwave, array=data['visphi']),
-                    fits.Column(name='VISPHIERR', unit='DEGREES', format='%dD'%nwave, array=data['visphierr']),
-                    fits.Column(name='UCOORD', format='1D', unit='METERS', array=data['ucoord']),
-                    fits.Column(name='VCOORD', format='1D', unit='METERS', array=data['vcoord']),
-                    fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
-                    fits.Column(name='FLAG', format='%dL'%nwave)
-                    ]))
+                cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
+                        fits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
+                        fits.Column(name='MJD', unit='DAY', format='1D', array=data['mjd']),
+                        fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time'])]
+                # If TUNITs should be specified, do so
+                if (revision >= 2) and (key[3] == 'correlated flux'):
+                    cols += [fits.Column(name='VISAMP', unit=vis.ampunit, format='%dD'%nwave, array=data['visamp']),
+                             fits.Column(name='VISAMPERR', unit=vis.ampunit, format='%dD'%nwave, array=data['visamperr'])]
+                else:
+                    cols += [fits.Column(name='VISAMP', format='%dD'%nwave, array=data['visamp']),
+                             fits.Column(name='VISAMPERR', format='%dD'%nwave, array=data['visamperr'])]
+                cols += [fits.Column(name='VISPHI', unit='DEGREES', format='%dD'%nwave, array=data['visphi']),
+                         fits.Column(name='VISPHIERR', unit='DEGREES', format='%dD'%nwave, array=data['visphierr']),
+                         fits.Column(name='UCOORD', format='1D', unit='METERS', array=data['ucoord']),
+                         fits.Column(name='VCOORD', format='1D', unit='METERS', array=data['vcoord']),
+                         fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
+                         fits.Column(name='FLAG', format='%dL'%nwave)]
+                hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
 
                 # Setting the data of logical field via the
                 # fits.Column call above with length > 1 (eg
@@ -1551,20 +1626,25 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS'
-                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                if key[3]: hdu.header['AMPTYP'] = key[3], 'Type for amplitude measurement'
+                if key[4]: hdu.header['PHITYP'] = key[4], 'Type for phi measurement'
                 hdulist.append(hdu)
 
         if self.vis2.size:
             tables = {}
+            # Check if any of the vis2 tables are higher than revision 1; save
+            # everything with highest revision used
+            revision = 1
+            for vis in self.vis2:
+                if vis.revision > revision: revision = vis.revision
             for vis in self.vis2:
                 nwave = vis.wavelength.eff_wave.size
-                if vis.array:
-                    key = (arraymap[id(vis.array)], wavelengthmap[id(vis.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(vis.wavelength)])
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)))
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1595,6 +1675,8 @@ class oifits(object):
                     data['sta_index'].append([stationmap[id(vis.station[0])], stationmap[id(vis.station[1])]])
                 else:
                     data['sta_index'].append([-1, -1])
+                if vis.corr:
+                    raise NotImplementedError('Writing correlation information from OI_VIS2 tables is not yet implemented')
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
@@ -1617,7 +1699,7 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS2'
-                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
@@ -1625,12 +1707,14 @@ class oifits(object):
 
         if self.t3.size:
             tables = {}
+            # Check if any of the t3 tables are higher than revision 1; save
+            # everything with highest revision used
+            revision = 1
+            for t3 in self.t3:
+                if t3.revision > revision: revision = t3.revision
             for t3 in self.t3:
                 nwave = t3.wavelength.eff_wave.size
-                if t3.array:
-                    key = (arraymap[id(t3.array)], wavelengthmap[id(t3.wavelength)])
-                else:
-                    key = (None, wavelengthmap[id(t3.wavelength)])
+                key = (arraymap.get(id(t3.array)), wavelengthmap.get(id(t3.wavelength)), corrmap.get(id(t3.corr)))
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1668,6 +1752,8 @@ class oifits(object):
                     data['sta_index'].append([stationmap[id(t3.station[0])], stationmap[id(t3.station[1])], stationmap[id(t3.station[2])]])
                 else:
                     data['sta_index'].append([-1, -1, -1])
+                if t3.corr:
+                    raise NotImplementedError('Writing correlation information from OI_T3 tables is not yet implemented')
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
@@ -1694,10 +1780,67 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_T3'
-                hdu.header['OI_REVN'] = 1, 'Revision number of the table definition'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                hdulist.append(hdu)
+
+        if self.flux.size:
+            tables = {}
+            revision = 1
+            for flux in self.flux:
+                nwave = flux.wavelength.eff_wave.size
+                key = (arraymap.get(id(flux.array)), wavelengthmap.get(id(flux.wavelength)), corrmap.get(id(flux.corr)), flux.fov, flux.fovtype, flux.calibrated)
+                if key in tables.keys():
+                    data = tables[key]
+                else:
+                    data = tables[key] = {'target_id':[], 'mjd':[], 'int_time':[],
+                                          'fluxdata':[], 'fluxerr':[],
+                                          'sta_index':[], 'flag':[]}
+                data['target_id'].append(targetmap[id(flux.target)])
+                mjd = (flux.timeobs - _mjdzero).days + (flux.timeobs - _mjdzero).seconds / 3600.0 / 24.0
+                data['mjd'].append(mjd)
+                data['int_time'].append(flux.int_time)
+                if nwave == 1:
+                    data['fluxdata'].append(flux.fluxdata[0])
+                    data['fluxerr'].append(flux.fluxerr[0])
+                    data['flag'].append(flux.flag[0])
+                else:
+                    data['fluxdata'].append(flux.fluxdata)
+                    data['fluxerr'].append(flux.fluxerr)
+                    data['flag'].append(flux.flag)
+                if flux.station:
+                    data['sta_index'].append(stationmap[id(flux.station)])
+                else:
+                    data['sta_index'].append(-1)
+                if flux.corr:
+                    raise NotImplementedError('Writing correlation information from OI_FLUX tables is not yet implemented')
+            for key in tables.keys():
+                data = tables[key]
+                nwave = self.wavelength[key[1]].eff_wave.size
+                
+                cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
+                       fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
+                       fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
+                       fits.Column(name='FLUXDATA', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxdata']),
+                       fits.Column(name='FLUXERR', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxerr'])]
+                # Station should only be present for 'uncalibrated' spectra
+                if not flux.calibrated:
+                    cols += [fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1)]
+                cols += [fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])]
+                hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
+
+                hdu.header['EXTNAME'] = 'OI_FLUX'
+                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
+                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[0] and not flux.calibrated: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
+                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                if key[3] and flux.calibrated: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
+                if key[4] and flux.calibrated: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
+                if key[5]: hdu.header['CALSTAT'] = 'C', 'Calibration status'
+                else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
                 hdulist.append(hdu)
 
         hdulist.writeto(filename, overwrite=True)
@@ -1797,12 +1940,22 @@ def open(filename, quiet=False):
         if hdu.name == 'OI_VIS':
             # OIFITS2 parameters which default to None for OIFITS1
             amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = corr = None
+            corrindx_visamp = corrindx_visphi = corrindx_rvis = corrindx_ivis = None
+            ampunit = rvisunit = ivisunit = None
             if revision >= 2:
                 amptyp = header.get('AMPTYP')
                 phityp = header.get('PHITYP')
                 amporder = header.get('AMPORDER')
                 phiorder = header.get('PHIORDER')
                 corr = newobj.corr.get(corrname)
+                if amptyp == 'correlated flux':
+                    ampunit = data.columns['VISAMP'].unit
+                    # RVIS and IVIS may not be present
+                    try:
+                        rvisunit = data.columns['RVIS'].unit
+                        ivisunit = data.columns['IVIS'].unit
+                    except KeyError:
+                        pass
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1837,15 +1990,30 @@ def open(filename, quiet=False):
                         ivis = row['IVIS']
                     if 'IVISERR' in data.names:
                         iviserr = row['IVISERR']
+                    if 'CORRINDX_VISAMP' in data.names:
+                        corrindx_visamp = row['CORRINDX_VISAMP']
+                    if 'CORRINDX_VISPHI' in data.names:
+                        corrindx_visphi = row['CORRINDX_VISPHI']
+                    if 'CORRINDX_RVIS' in data.names:
+                        corrindx_rvis = row['CORRINDX_RVIS']
+                    if 'CORRINDX_IVIS' in data.names:
+                        corrindx_ivis = row['CORRINDX_IVIS']
                 newobj.vis = np.append(newobj.vis, OI_VIS(timeobs=timeobs, int_time=int_time, visamp=visamp,
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
                                                           flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength, corr=corr,
                                                           target=target, array=array, station=station, cflux=cflux,
                                                           cfluxerr=cfluxerr, revision=revision,
+                                                          corrindx_visamp=corrindx_visamp, corrindx_visphi=corrindx_visphi,
+                                                          corrindx_rvis=corrindx_rvis, corrindx_ivis=corrindx_ivis,
                                                           amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
+                                                          ampunit=ampunit, rvisunit=rvisunit, ivisunit=ivisunit,
                                                           visrefmap=visrefmap,
                                                           rvis=rvis, rviserr=rviserr, ivis=ivis, iviserr=iviserr))
         elif hdu.name == 'OI_VIS2':
+            # OIFITS2 parameters which default to None for OIFITS1
+            corr = corrindx_vis2data = None
+            if revision >= 2:
+                corr = newobj.corr.get(corrname)
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1855,10 +2023,6 @@ def open(filename, quiet=False):
                 ucoord = row['UCOORD']
                 vcoord = row['VCOORD']
                 target = targetmap[row['TARGET_ID']]
-                if revision >= 2:
-                    corr = newobj.corr.get(corrname)
-                else:
-                    corr = None
                 if array:
                     sta_index = row['STA_INDEX']
                     s1 = array.station[sta_indices[arrname] == sta_index[0]][0]
@@ -1866,11 +2030,20 @@ def open(filename, quiet=False):
                     station = [s1, s2]
                 else:
                     station = [None, None]
+                # Optional OIFITS2 values
+                if revision >= 2:
+                    if 'CORRINDX_VIS2DATA' in data.names:
+                        corrindx_vis2data = row['CORRINDX_VIS2DATA']
                 newobj.vis2 = np.append(newobj.vis2, OI_VIS2(timeobs=timeobs, int_time=int_time, vis2data=vis2data,
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
-                                                             wavelength=wavelength, corr=corr, target=target, array=array,
+                                                             wavelength=wavelength, corr=corr, corrindx_vis2data=corrindx_vis2data,
+                                                             target=target, array=array,
                                                              station=station, revision=revision))
         elif hdu.name == 'OI_T3':
+            # OIFITS2 parameters which default to None for OIFITS1
+            corr = corrindx_t3amp = corrindx_t3phi = None
+            if revision >= 2:
+                corr = newobj.corr.get(corrname)
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
@@ -1893,25 +2066,37 @@ def open(filename, quiet=False):
                 else:
                     station = [None, None, None]
                 if revision >= 2:
-                    corr = newobj.corr.get(corrname)
-                else:
-                    corr = None
+                    if 'CORRINDX_T3AMP' in data.names:
+                        corrindx_t3amp = row['CORRINDX_T3AMP']
+                    if 'CORRINDX_T3PHI' in data.names:
+                        corrindx_t3phi = row['CORRINDX_T3PHI']
                 newobj.t3 = np.append(newobj.t3, OI_T3(timeobs=timeobs, int_time=int_time, t3amp=t3amp,
                                                        t3amperr=t3amperr, t3phi=t3phi, t3phierr=t3phierr,
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
-                                                       v2coord=v2coord, wavelength=wavelength, corr=corr, target=target,
-                                                       array=array, station=station, revision=revision))
+                                                       v2coord=v2coord, wavelength=wavelength, corr=corr,
+                                                       corrindx_t3amp=corrindx_t3amp, corrindx_t3phi=corrindx_t3phi,
+                                                       target=target, array=array, station=station, revision=revision))
         elif hdu.name == 'OI_FLUX':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
                 int_time = row['INT_TIME']
-                fluxdata = np.reshape(row['FLUXDATA'], -1)
+                try:
+                    fluxdata = np.reshape(row['FLUXDATA'], -1)
+                except KeyError:
+                    fluxdata = np.reshape(row['FLUX'], -1)
+                    warnings.warn('Warning: This file does not conform to the OIFITS2 standard: OI_FLUX contains flux data in FLUX. Correcting to FLUXDATA.', UserWarning)
                 fluxerr = np.reshape(row['FLUXERR'], -1)
                 flag = np.reshape(row['FLAG'], -1)
                 target = targetmap[row['TARGET_ID']]
                 fov = header.get('FOV')
                 fovtype = header.get('FOVTYPE')
                 corr = newobj.corr.get(corrname)
+                try:
+                    fluxunit = data.columns['FLUXDATA'].unit
+                except KeyError:
+                    fluxunit = data.columns['FLUX'].unit
+                    warnings.warn('Warning: This file does not conform to the OIFITS2 standard: OI_FLUX contains flux data in FLUX. Correcting to FLUXDATA.', UserWarning)
+                fluxerrunit = data.columns['FLUXERR'].unit
                 if header['CALSTAT'] == 'C':
                     calibrated = True
                 else:
@@ -1926,7 +2111,8 @@ def open(filename, quiet=False):
                                         fluxdata=fluxdata, fluxerr=fluxerr, flag=flag,
                                         wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
-                                        fov=fov, fovtype=fovtype, revision=revision))
+                                        fov=fov, fovtype=fovtype, fluxunit=fluxunit, fluxerrunit=fluxerrunit,
+                                        revision=revision))
         elif hdu.name == 'OI_INSPOL':
             for row in data:
                 target = targetmap[row['TARGET_ID']]
