@@ -219,7 +219,8 @@ class OI_TARGET(object):
             (self.equinox   != other.equinox)   or
             (self.ra_err    != other.ra_err)    or
             (self.dec_err   != other.dec_err)   or
-            (self.sysvel    != other.sysvel)    or
+            # Handle the case where both sysvels are nan
+            ((self.sysvel != other.sysvel) != (np.isnan(self.sysvel) and np.isnan(other.sysvel))) or
             (self.veltyp    != other.veltyp)    or
             (self.veldef    != other.veldef)    or
             (self.pmra      != other.pmra)      or
