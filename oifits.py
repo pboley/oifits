@@ -1903,7 +1903,7 @@ def open(filename, quiet=False):
             # Check if this file was written with an older verison (<0.5) of the module
             # and needs to have arrxyz positions fixed due to changing to ITRS
             if arrname == 'VLTI':
-                for i, comment in enumerate(hdulist[0].header['COMMENT']):
+                for i, comment in enumerate(hdulist[0].header.get('COMMENT', '')):
                     if 'Written by OIFITS Python module' in str(comment):
                         if version.parse(comment.split()[-1]) < version.parse('0.5-dev'):
                             warnings.warn('Changing array center coordinates to ITRS', UserWarning)
