@@ -1375,7 +1375,7 @@ class oifits(object):
                     inspol.info()
             print("%d inspol measurement%s"%(len(self.inspol), _plurals(len(self.inspol))))
 
-    def save(self, filename):
+    def save(self, filename, overwrite=False):
         """Write the contents of the oifits object to a file in OIFITS
         format."""
 
@@ -1844,7 +1844,7 @@ class oifits(object):
                 else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
                 hdulist.append(hdu)
 
-        hdulist.writeto(filename, overwrite=True)
+        hdulist.writeto(filename, overwrite=overwrite)
 
 
 
