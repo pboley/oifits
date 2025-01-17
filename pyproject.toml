@@ -1,0 +1,26 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "oifits"
+requires-python = ">=3.8"
+readme = "readme.md"
+license = {file = "LICENSE.txt"}
+
+keywords = ["astronomy", "interferometry"]
+authors = [
+	{name = "Paul Boley", email = "pboley@gmail.com"}
+]
+dynamic = ["version", "description"]
+
+dependencies = [
+    "astropy>=5.0",
+    "numpy>=1.20.0",
+]
+
+[project.urls]
+Home = "https://github.com/pboley/oifits"
+
+[tool.flit.module]
+name = "oifits"

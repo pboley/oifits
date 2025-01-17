@@ -94,8 +94,8 @@ from packaging import version
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='21 June 2024'
-__version__ = '0.6-dev'
+__date__ ='17 January 2025'
+__version__ = '0.6.0'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
