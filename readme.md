@@ -33,10 +33,16 @@ email at <pboley@gmail.com>.
 
 ## Installation
 
-The module is self-contained in a single file, `oifits.py`. To use it, just put
-it in the working directory of your project, or in your
-[PYTHONPATH](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH)
-(recommended).
+The module is [available](https://pypi.org/project/oifits/) on PyPI and can be
+installed using pip:
+
+```shell
+pip install oifits
+```
+
+You can also just save `oifits.py` to the working directory of your project or
+your
+[PYTHONPATH](https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH).
 
 ## Usage
 
@@ -179,9 +185,11 @@ documented explicitly.
 
 ## Acknowledgements
 
-OIFITS2 capabilities were implemented with the financial support of grant
-[18-72-10132](https://rscf.ru/en/project/18-72-10132/) of the [Russian Science
-Foundation](https://rscf.ru/en/).
+Initial OIFITS2 capabilities were implemented with the financial support of
+grant [18-72-10132](https://rscf.ru/en/project/18-72-10132/) of the [Russian
+Science Foundation](https://rscf.ru/en/). That being said, the author is no
+longer affiliated with Russian institutions and condemns the Russian invasion
+of Ukraine.
 
 ## References
 
