@@ -8,8 +8,8 @@ Note, OIFITS2 support is currently in development, although already mostly
 working for both reading and writing OIFITS2 files. Please open an issue or
 contact me if you find any bugs.
 
-The module was tested with Astropy 4.2 and numpy 1.19.2 under Python 3.8.5.
-Earlier versions will probably work, too.
+The module was tested with Astropy 5.2.2 and NumPy 1.24.4 under Python 3.8.20.
+Earlier and later versions will probably work, too.
 
 For some example functions which make use of the module, see `oitools.py` in the
 contrib directory. These are undocumented, messy examples only and may not work;
