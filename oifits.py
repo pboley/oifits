@@ -94,8 +94,8 @@ from packaging import version
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='17 January 2025'
-__version__ = '0.6.0'
+__date__ ='25 January 2025'
+__version__ = '0.6.1'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -1873,7 +1873,7 @@ def open(filename, quiet=False):
         # suffer from this problem, and the strings are ugly as a result.  Fix it.
         if type(hdu) == fits.hdu.table.BinTableHDU:
             for name in data.names:
-                if data.dtype[name].type == np.string_:
+                if data.dtype[name].type == np.bytes_:
                     data[name] = list(map(str.rstrip, data[name]))
         if hdu.name == 'OI_WAVELENGTH':
             revision = header['OI_REVN']
