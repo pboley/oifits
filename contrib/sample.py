@@ -13,8 +13,8 @@ def get_uv_coords(array, s1, s2, ra, dec, ha):
     ra *= pi / 180.0
     dec *= pi / 180.0
     # Same for lat/long of array center
-    latitude = vlti.latitude * pi / 180.0
-    longitude = vlti.longitude * pi / 180.0
+    latitude = array.latitude * pi / 180.0
+    longitude = array.longitude * pi / 180.0
 
     # Calculate an "east" unit vector
     east = np.array([center[1]*center[2],-center[0]*center[2],0])
