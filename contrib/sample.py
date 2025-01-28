@@ -4,7 +4,7 @@ import datetime
 from numpy import pi, cos, sin
 from scipy.special import jv
 
-def get_uv_coords(array, station1, station2, ra, dec, ha):
+def get_uv_coords(array, s1, s2, ra, dec, ha):
 
     # Convert hour angle, ra and dec to radians
     ha %= 24.0
