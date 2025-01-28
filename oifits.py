@@ -1391,7 +1391,8 @@ class oifits(object):
             for i, comment in enumerate(hdu.header['COMMENT']):
                 if (('Written by OIFITS Python module' in str(comment)) |
                     ('http://www.mpia-hd.mpg.de/homes/boley/oifits/' in str(comment)) |
-                    ('http://astro.ins.urfu.ru/pages/~pboley/oifits/' in str(comment))):
+                    ('http://astro.ins.urfu.ru/pages/~pboley/oifits/' in str(comment)) |
+                    ('https://github.com/pboley/oifits' in str(comment))):
                     remcomments.append(i)
         except KeyError:
             # KeyError should be raised if there are no comments
