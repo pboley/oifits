@@ -1,4 +1,4 @@
-# from http://www.eso.org/observing/etc/doc/vlti/baseline/vltistations.html
+# from https://www.eso.org/observing/etc/doc/viscalc/vltistations.html
 #ID_______P__________Q__________E__________N____
  A0    -32.001    -48.013    -14.642    -55.812
  A1    -32.001    -64.021     -9.434    -70.949
