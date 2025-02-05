@@ -1,9 +1,7 @@
 Synthetic observations of a binary system and rotating skewed disk
 ==================================================================
 
-<h1 align="center">
-<img src="output/epoch01.png" width="300"/>
-</h1><br/>
+![System animation](movie.gif)
 
 These scripts were used to generate synthetic observations for a presentation
 (will be available online later) at the [Horizons for Optical Long Baseline
@@ -16,8 +14,6 @@ surrounded by a skewed ring, the illumintation of which follows the brighter
 component of the binary. The orbital period of the system, as well as the
 rotational period of the ring, is 20 days, meaning the source appearance on the
 sky changes significantly over the span of the ISL (by design).  
-
-Because these scripts are a good example 
 
 ## Requirements
 

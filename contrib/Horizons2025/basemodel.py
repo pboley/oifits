@@ -23,7 +23,7 @@ outdir = 'output'
 
 fov = 18 # mas
 npix = 512
-nt = 128 # number of time frames
+nt = 90 # number of time frames
 extent = (fov/2, -fov/2, -fov/2, fov/2)
 
 # Since distance is set to 1 kpc (below), 1 au = 1 ms
@@ -67,7 +67,7 @@ t = t0 + np.linspace(0, P, nt)
 
 if doAnimation:
     images = [getmodel(x).getImage(npix, fov/npix, fromFT=True) for x in t]
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(4,4))
     ims = []
     for i, image in enumerate(images):
         im = ax.imshow(image, extent=extent, cmap=cmap, animated=True)
@@ -80,7 +80,7 @@ if doAnimation:
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                     repeat_delay=0)
     writer = animation.FFMpegWriter(fps=15, bitrate=720)
-    ani.save('movie.mp4', writer=writer)
+    ani.save('movie.gif', writer=writer)
 else:
     m = getmodel(t0)
     sim = oim.oimSimulator(data=data, model=m)
@@ -91,7 +91,7 @@ else:
     if not isdir(outdir): mkdir(outdir)
     ssim.save(join(outdir, oifn), overwrite=True)
     im = m.getImage(npix, fov/npix, fromFT=True)
-    fig, ax = plt.subplots(figsize=(6,6))
+    fig, ax = plt.subplots(figsize=(4,4))
     ax.imshow(im, extent=extent, cmap=cmap)
     ax.set_xlabel(r'$\Delta \alpha$ (mas)')
     ax.set_ylabel(r'$\Delta \delta$ (mas)')
