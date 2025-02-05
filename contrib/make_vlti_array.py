@@ -38,7 +38,9 @@ northy/=northmag
 northz/=northmag
 
 data = np.genfromtxt('baseline_data.txt', usecols=(0,3,4), dtype=[('name', 'U2'), ('E', 'f8'), ('N', 'f8')])
-diameters = [8.2 if 'U' in x else 1.8 for x in data['name']]
+
+# OI_ARRAY requires a named and iterable object similar to what's in OIFITS
+# files.
 t = Table()
 t['STA_NAME'] = t['TEL_NAME'] = data['name']
 t['DIAMETER'] = [8.2 if 'U' in x else 1.8 for x in data['name']]

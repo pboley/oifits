@@ -11,22 +11,6 @@ contact me if you find any bugs.
 The module was tested with Astropy 5.2.2 and NumPy 1.24.4 under Python 3.8.20.
 Earlier and later versions will probably work, too.
 
-For some example functions which make use of the module, see `oitools.py` in the
-contrib directory. These are undocumented, messy examples only and may not work;
-you should probably write your own.
-
-Also included in the contrib directory is a sample array file for the VLTI.
-This can be viewed using the plot_array function in `oitools.py`:
-
-```python
-import matplotlib.pylab as plt
-import oifits
-from oitools import plot_array
-oidata = oifits.open('VLTI-array.fits')
-plot_array(oidata.array['VLTI'])
-plt.show()
-```
-
 If you discover bugs, have issues with the code or suggestions, please feel
 free to open an issue on Github or contact me via
 email at <pboley@gmail.com>.
@@ -125,12 +109,7 @@ No mechanism is provided for the case where `OI_WAVELENGTH` tables have
 identical names (INSNAME), but differing contents, as this requires
 reinterpolating your data and is beyond the scope of this module.
 
-### Creating an OIFITS object from scratch
-
-An example of creating an OIFITS file from scratch, which simulates using the
-VLTI and MIDI (now decomissioned) for observations at random hour angles of the
-calibrator star HD 148478, described as a uniform disk, can be found in
-`sample.py` in the contrib directory.
+### Consistency and validity of OIFITS objects
 
 Once you have assembled your OIFITS object, you can check if it is *consistent*
 or *valid* by using the `isconsistent()` and `isvalid()` methods of the newly
@@ -148,6 +127,11 @@ reuse it as needed.
 
 If your OIFITS object is at least *consistent*, it can be written to a FITS file
 using the `save()` method.
+
+### Code examples
+
+For some further example scripts which make use of the module, see the
+[contrib](./contrib) directory.
 
 ## How to deal with non-conforming (broken) files
 
