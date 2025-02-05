@@ -669,7 +669,7 @@ def plot_array(array, visibilities=None):
         ax.plot([x], [y], 'o', color=color, markersize=1+station.diameter)
         plt.text(x, y, station.sta_name, transform=transOffset, horizontalalignment='center', verticalalignment='top', family='serif')
 
-    if visibilities:
+    if type(visibilities) != type(None):
         for vis in visibilities:
             x = np.array([np.inner(vis.station[0].staxyz, east), np.inner(vis.station[1].staxyz, east)])
             y = np.array([np.inner(vis.station[0].staxyz, north), np.inner(vis.station[1].staxyz, north)])
@@ -695,6 +695,8 @@ def plot_array(array, visibilities=None):
 
     ax.set_xlabel('Relative position (m)')
     ax.set_ylabel('Relative position (m)')
+
+    return fig
 
 def plot_uv_size(oidata, maxvis=0.3, waveidx=80):
 
@@ -723,6 +725,8 @@ def plot_uv_size(oidata, maxvis=0.3, waveidx=80):
     ax.set_xlabel('u (m)')
     ax.set_ylabel('v (m)')
     ax.set_title(r'$\lambda = %g$ $\mu$m'%(1e6*oidata.vis[0].wavelength.eff_wave[waveidx]))
+
+    return fig
 
 def station_distance(array, sta1name, sta2name):
 

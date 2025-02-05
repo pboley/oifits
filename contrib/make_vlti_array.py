@@ -1,8 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from numpy import sin, cos, pi, sqrt
 import oifits
 from astropy.coordinates import EarthLocation
 import astropy.units as u
+from oitools import plot_array
+from astropy.table import Table
 
 # Coordinates of array center
 longitude=-70.40479659*u.deg
@@ -35,21 +38,20 @@ northy/=northmag
 northz/=northmag
 
 data = np.genfromtxt('baseline_data.txt', usecols=(0,3,4), dtype=[('name', 'U2'), ('E', 'f8'), ('N', 'f8')])
-stations = []
+diameters = [8.2 if 'U' in x else 1.8 for x in data['name']]
+t = Table()
+t['STA_NAME'] = t['TEL_NAME'] = data['name']
+t['DIAMETER'] = [8.2 if 'U' in x else 1.8 for x in data['name']]
+t['STAXYZ'] = np.array([data['N']*northx+data['E']*eastx, data['N']*northy+data['E']*easty, data['N']*northz]).T
 
-for sta_name, E, N in data:
-    staxyz = [N*northx+E*eastx,
-              N*northy+E*easty,
-              N*northz]
-    if 'U' in sta_name:
-        diameter = 8.2
-    else:
-        diameter = 1.8
-    stations.append((sta_name, sta_name, -1, diameter, staxyz))
-
-array = oifits.OI_ARRAY('GEOCENTRIC', arrxyz, stations)
+array = oifits.OI_ARRAY('GEOCENTRIC', arrxyz, t)
 
 oifitsobj = oifits.oifits()
 oifitsobj.array['VLTI'] = array
 
+fig = plot_array(array)
+fig.set_figheight(5)
+fig.set_figwidth(5)
+plt.tight_layout()
+fig.savefig('VLTI-array.png')
 oifitsobj.save('VLTI-array.fits')

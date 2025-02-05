@@ -816,7 +816,6 @@ class OI_ARRAY(object):
             # Go field by field, since some OIFITS files have "extra" fields
             tel_name = station['TEL_NAME']
             sta_name = station['STA_NAME']
-            sta_index = station['STA_INDEX']
             diameter = station['DIAMETER']
             staxyz = station['STAXYZ']
             if revision >= 2:
