@@ -74,7 +74,7 @@ the oifits object itself, e.g. `oifitsobj.array['VLTI'].info()` or
 The individual measurements can be referred to by accessing elements of the
 `vis`, `vis2`, `t3` and/or `flux` numpy arrays.  These are themselves objects,
 which contain the measurement data, as well as references to the corresponding
-wavelength tables, intererometry stations, etc.
+wavelength tables, interferometry stations, etc.
 
 For example, if your OIFITS file contains OI_VIS measurements, the visibility
 amplitude can be found in `oifitsobj.vis[0].visamp`, while the wavelengths

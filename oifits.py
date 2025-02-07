@@ -1572,14 +1572,13 @@ class oifits(object):
                 if _notnone(vis.cflux) or _notnone(vis.cfluxerr):
                     warnings.warn('CFLUX columns in OI_VIS object will not be saved.', UserWarning)
                 data['target_id'].append(targetmap[id(vis.target)])
-                if vis.timeobs:
+                if revision >= 2:
+                    data['time'].append(0)
+                else:
                     time = vis.timeobs - refdate
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
-                    mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
-                    data['mjd'].append(mjd)
-                else:
-                    data['time'].append(None)
-                    data['mjd'].append(None)
+                mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
+                data['mjd'].append(mjd)
                 data['int_time'].append(vis.int_time)
                 if nwave == 1:
                     data['visamp'].append(vis.visamp[0])
@@ -1653,14 +1652,13 @@ class oifits(object):
                                           'vis2data':[], 'vis2err':[], 'ucoord':[], 'vcoord':[],
                                           'sta_index':[], 'flag':[]}
                 data['target_id'].append(targetmap[id(vis.target)])
-                if vis.timeobs:
+                if revision >= 2:
+                    data['time'].append(0)
+                else:
                     time = vis.timeobs - refdate
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
-                    mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
-                    data['mjd'].append(mjd)
-                else:
-                    data['time'].append(None)
-                    data['mjd'].append(None)
+                mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
+                data['mjd'].append(mjd)
                 data['int_time'].append(vis.int_time)
                 if nwave == 1:
                     data['vis2data'].append(vis.vis2data[0])
@@ -1724,14 +1722,13 @@ class oifits(object):
                                           'u1coord':[], 'v1coord':[], 'u2coord':[], 'v2coord':[],
                                           'sta_index':[], 'flag':[]}
                 data['target_id'].append(targetmap[id(t3.target)])
-                if t3.timeobs:
+                if revision >= 2:
+                    data['time'].append(0)
+                else:
                     time = t3.timeobs - refdate
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
-                    mjd = (t3.timeobs - _mjdzero).days + (t3.timeobs - _mjdzero).seconds / 3600.0 / 24.0
-                    data['mjd'].append(mjd)
-                else:
-                    data['time'].append(None)
-                    data['mjd'].append(None)
+                mjd = (t3.timeobs - _mjdzero).days + (t3.timeobs - _mjdzero).seconds / 3600.0 / 24.0
+                data['mjd'].append(mjd)
                 data['int_time'].append(t3.int_time)
                 if nwave == 1:
                     data['t3amp'].append(t3.t3amp[0])
