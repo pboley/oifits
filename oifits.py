@@ -100,7 +100,6 @@ _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
 matchstationbyname = False
-refdate = datetime.datetime(2000, 1, 1)
 
 def _plurals(count):
     if count != 1: return 's'
@@ -316,7 +315,7 @@ class OI_VIS(object):
     """
 
     def __init__(self, timeobs, int_time, visamp, visamperr, visphi, visphierr, flag, ucoord,
-                 vcoord, wavelength, target, corr=None, array=None, station=(None,None), cflux=None, cfluxerr=None, revision=1,
+                 vcoord, wavelength, target, corr=None, array=None, station=(None,None), cflux=None, cfluxerr=None, date=None, revision=1,
                  # The follow arguments are used for OIFITS2
                  corrindx_visamp=None, corrindx_visphi=None, corrindx_rvis=None, corrindx_ivis=None,
                  amptyp=None, phityp=None, amporder=None, phiorder=None,
@@ -327,6 +326,7 @@ class OI_VIS(object):
             warnings.warn('OI_VIS revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
+        self.date = date or timeobs.date()
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -370,6 +370,7 @@ class OI_VIS(object):
         # Test equality for OIFITS1
         eq = not (
             (self.revision   != other.revision)   or
+            (self.date       != other.date)       or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -448,12 +449,13 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), revision=1):
+                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), date=None, revision=1):
 
         if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
+        self.date = date or timeobs.date()
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -475,6 +477,7 @@ class OI_VIS2(object):
 
         eq = not (
             (self.revision   != other.revision)   or
+            (self.date       != other.date)       or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -533,12 +536,13 @@ class OI_T3(object):
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
                  v1coord, u2coord, v2coord, wavelength, target, corr=None,
                  corrindx_t3amp=None, corrindx_t3phi=None,
-                 array=None, station=(None,None,None), revision=1):
+                 array=None, station=(None,None,None), date=None, revision=1):
 
         if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
+        self.date = date or timeobs.date()
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -565,6 +569,7 @@ class OI_T3(object):
 
         eq = not (
             (self.revision   != other.revision)   or
+            (self.date       != other.date)       or
             (self.timeobs    != other.timeobs)    or
             (self.array      != other.array)      or
             (self.wavelength != other.wavelength) or
@@ -627,12 +632,13 @@ class OI_FLUX(object):
 
     def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
                  wavelength, target, calibrated, fluxunit, fluxerrunit, corr=None, array=None, station=None,
-                 fov=None, fovtype=None, revision=1):
+                 fov=None, fovtype=None, date=None, revision=1):
 
         if revision > 1:
             warnings.warn('OI_FLUX revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
+        self.date = date or timeobs.date()
         self.timeobs = timeobs
         self.array = array
         self.wavelength = wavelength
@@ -655,6 +661,7 @@ class OI_FLUX(object):
 
         return not (
             (self.revision    != other.revision)    or
+            (self.date        != other.date)        or
             (self.timeobs     != other.timeobs)     or
             (self.array       != other.array)       or
             (self.wavelength  != other.wavelength)  or
@@ -748,12 +755,13 @@ class OI_STATION(object):
 
 class OI_INSPOL(object):
 
-    def __init__(self, timestart, timeend, orient, model, jxx, jyy, jxy, jyx, wavelength, target, array, station, revision=1):
+    def __init__(self, timestart, timeend, orient, model, jxx, jyy, jxy, jyx, wavelength, target, array, station, date=None, revision=1):
 
         if revision > 1:
             warnings.warn('OI_INSPOL revision %d not implemented yet'%revision, UserWarning)
 
         self.revision = revision
+        self.date = date or timestart.date()
         self.timestart = timestart
         self.timeend = timeend
         self.orient = orient
@@ -773,6 +781,7 @@ class OI_INSPOL(object):
 
         return not (
             (self.revision   != other.revision)   or
+            (self.date       != other.date)       or
             (self.timestart  != other.timestart)  or
             (self.timeend    != other.timeend)    or
             (self.orient     != other.orient)     or
@@ -1561,7 +1570,7 @@ class oifits(object):
                 if vis.revision > revision: revision = vis.revision
             for vis in self.vis:
                 nwave = vis.wavelength.eff_wave.size
-                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp)
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp, vis.date)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1575,7 +1584,7 @@ class oifits(object):
                 if revision >= 2:
                     data['time'].append(0)
                 else:
-                    time = vis.timeobs - refdate
+                    time = vis.timeobs - datetime.datetime.fromordinal(vis.date.toordinal())
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
                 mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
                 data['mjd'].append(mjd)
@@ -1627,7 +1636,7 @@ class oifits(object):
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS'
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
@@ -1644,7 +1653,7 @@ class oifits(object):
                 if vis.revision > revision: revision = vis.revision
             for vis in self.vis2:
                 nwave = vis.wavelength.eff_wave.size
-                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)))
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.date)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1655,7 +1664,7 @@ class oifits(object):
                 if revision >= 2:
                     data['time'].append(0)
                 else:
-                    time = vis.timeobs - refdate
+                    time = vis.timeobs - datetime.datetime.fromordinal(vis.date.toordinal())
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
                 mjd = (vis.timeobs - _mjdzero).days + (vis.timeobs - _mjdzero).seconds / 3600.0 / 24.0
                 data['mjd'].append(mjd)
@@ -1699,7 +1708,7 @@ class oifits(object):
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS2'
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
@@ -1713,7 +1722,7 @@ class oifits(object):
                 if t3.revision > revision: revision = t3.revision
             for t3 in self.t3:
                 nwave = t3.wavelength.eff_wave.size
-                key = (arraymap.get(id(t3.array)), wavelengthmap.get(id(t3.wavelength)), corrmap.get(id(t3.corr)))
+                key = (arraymap.get(id(t3.array)), wavelengthmap.get(id(t3.wavelength)), corrmap.get(id(t3.corr)), t3.date)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1725,7 +1734,7 @@ class oifits(object):
                 if revision >= 2:
                     data['time'].append(0)
                 else:
-                    time = t3.timeobs - refdate
+                    time = t3.timeobs - datetime.datetime.fromordinal(t3.date.toordinal())
                     data['time'].append(time.days * 24.0 * 3600.0 + time.seconds)
                 mjd = (t3.timeobs - _mjdzero).days + (t3.timeobs - _mjdzero).seconds / 3600.0 / 24.0
                 data['mjd'].append(mjd)
@@ -1779,7 +1788,7 @@ class oifits(object):
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_T3'
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                hdu.header['DATE-OBS'] = t3.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 hdulist.append(hdu)
@@ -1789,7 +1798,7 @@ class oifits(object):
             revision = 1
             for flux in self.flux:
                 nwave = flux.wavelength.eff_wave.size
-                key = (arraymap.get(id(flux.array)), wavelengthmap.get(id(flux.wavelength)), corrmap.get(id(flux.corr)), flux.fov, flux.fovtype, flux.calibrated)
+                key = (arraymap.get(id(flux.array)), wavelengthmap.get(id(flux.wavelength)), corrmap.get(id(flux.corr)), flux.fov, flux.fovtype, flux.calibrated, flux.date)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1831,7 +1840,7 @@ class oifits(object):
 
                 hdu.header['EXTNAME'] = 'OI_FLUX'
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = refdate.strftime('%F'), 'Zero-point for table (UTC)'
+                hdu.header['DATE-OBS'] = flux.date.strftime('%F'), 'UTC start date of observations'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 if key[0] and not flux.calibrated: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
@@ -1932,9 +1941,8 @@ def open(filename, quiet=False):
                 wavelength = newobj.wavelength[header['INSNAME']]
             if 'T' in header['DATE-OBS']:
                 warnings.warn('Warning: DATE-OBS contains a timestamp, which is contradictory to the OIFITS2 standard. Timestamp ignored.', UserWarning)
-                date = header['DATE-OBS'].split('T')[0].split('-')
-            else:
-                date = header['DATE-OBS'].split('-')
+            date = datetime.date(*[int(x) for x in header['DATE-OBS'].split('T')[0].split('-')])
+
         if hdu.name == 'OI_VIS':
             # OIFITS2 parameters which default to None for OIFITS1
             amptyp = phityp = amporder = phiorder = visrefmap = rvis = rviserr = ivis = iviserr = corr = None
@@ -2000,7 +2008,7 @@ def open(filename, quiet=False):
                                                           visamperr=visamperr, visphi=visphi, visphierr=visphierr,
                                                           flag=flag, ucoord=ucoord, vcoord=vcoord, wavelength=wavelength, corr=corr,
                                                           target=target, array=array, station=station, cflux=cflux,
-                                                          cfluxerr=cfluxerr, revision=revision,
+                                                          cfluxerr=cfluxerr, date=date, revision=revision,
                                                           corrindx_visamp=corrindx_visamp, corrindx_visphi=corrindx_visphi,
                                                           corrindx_rvis=corrindx_rvis, corrindx_ivis=corrindx_ivis,
                                                           amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
@@ -2036,7 +2044,7 @@ def open(filename, quiet=False):
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
                                                              wavelength=wavelength, corr=corr, corrindx_vis2data=corrindx_vis2data,
                                                              target=target, array=array,
-                                                             station=station, revision=revision))
+                                                             station=station, date=date, revision=revision))
         elif hdu.name == 'OI_T3':
             # OIFITS2 parameters which default to None for OIFITS1
             corr = corrindx_t3amp = corrindx_t3phi = None
@@ -2073,7 +2081,7 @@ def open(filename, quiet=False):
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
                                                        v2coord=v2coord, wavelength=wavelength, corr=corr,
                                                        corrindx_t3amp=corrindx_t3amp, corrindx_t3phi=corrindx_t3phi,
-                                                       target=target, array=array, station=station, revision=revision))
+                                                       target=target, array=array, station=station, date=date, revision=revision))
         elif hdu.name == 'OI_FLUX':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
@@ -2110,7 +2118,7 @@ def open(filename, quiet=False):
                                         wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
                                         fov=fov, fovtype=fovtype, fluxunit=fluxunit, fluxerrunit=fluxerrunit,
-                                        revision=revision))
+                                        date=date, revision=revision))
         elif hdu.name == 'OI_INSPOL':
             for row in data:
                 target = targetmap[row['TARGET_ID']]
@@ -2121,7 +2129,7 @@ def open(filename, quiet=False):
                 newobj.inspol = np.append(newobj.inspol,
                                           OI_INSPOL(timestart, timeend, header['ORIENT'], header['MODEL'],
                                           row['JXX'], row['JYY'], row['JXY'], row['JYX'],
-                                          wavelength, target, array, station, revision=revision))
+                                          wavelength, target, array, station, date=date, revision=revision))
 
     hdulist.close()
     if not quiet:
