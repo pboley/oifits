@@ -1387,6 +1387,10 @@ class oifits(object):
         """Write the contents of the oifits object to a file in OIFITS
         format."""
 
+        # Extvers which are automatically incremented as HDUs are written
+        extvers = {'OI_WAVELENGTH':1, 'OI_CORR':1, 'OI_TARGET':1, 'OI_ARRAY':1,
+                   'OI_VIS':1, 'OI_VIS2':1, 'OI_T3':1, 'OI_FLUX':1}
+
         if not self.isconsistent():
             raise ValueError('oifits object is not consistent; refusing to go further')
 
@@ -1423,6 +1427,8 @@ class oifits(object):
                 fits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
                 )))
             hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
+            hdu.header['EXTVER'] = extvers['OI_WAVELENGTH']
+            extvers['OI_WAVELENGTH'] += 1
             hdu.header['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
             hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
             hdulist.append(hdu)
@@ -1436,6 +1442,8 @@ class oifits(object):
                 fits.Column(name='CORR', format='D1', array=corr.corr)
                 )))
             hdu.header['EXTNAME'] = 'OI_CORR'
+            hdu.header['EXTVER'] = extvers['OI_CORR']
+            extvers['OI_CORR'] += 1
             hdu.header['OI_REVN'] = corr.revision, 'Revision number of the table definition'
             hdu.header['CORRNAME'] = corrname
             hdulist.append(hdu)
@@ -1509,6 +1517,8 @@ class oifits(object):
 
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_TARGET'
+            hdu.header['EXTVER'] = extvers['OI_TARGET']
+            extvers['OI_TARGET'] += 1
             hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdulist.append(hdu)
 
@@ -1550,6 +1560,8 @@ class oifits(object):
                     cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             hdu.header['EXTNAME'] = 'OI_ARRAY'
+            hdu.header['EXTVER'] = extvers['OI_ARRAY']
+            extvers['OI_ARRAY'] += 1
             hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
             hdu.header['ARRNAME'] = arrname, 'Array name, for cross-referencing'
             hdu.header['FRAME'] = array.frame, 'Coordinate frame'
@@ -1635,6 +1647,8 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS'
+                hdu.header['EXTVER'] = extvers['OI_VIS']
+                extvers['OI_VIS'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
@@ -1707,6 +1721,8 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_VIS2'
+                hdu.header['EXTVER'] = extvers['OI_VIS2']
+                extvers['OI_VIS2'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
@@ -1787,6 +1803,8 @@ class oifits(object):
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
                 hdu.header['EXTNAME'] = 'OI_T3'
+                hdu.header['EXTVER'] = extvers['OI_T3']
+                extvers['OI_T3'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = t3.date.strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
@@ -1839,6 +1857,8 @@ class oifits(object):
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
 
                 hdu.header['EXTNAME'] = 'OI_FLUX'
+                hdu.header['EXTVER'] = extvers['OI_FLUX']
+                extvers['OI_FLUX'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = flux.date.strftime('%F'), 'UTC start date of observations'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
