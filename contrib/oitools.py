@@ -10,6 +10,26 @@ from matplotlib.patches import Rectangle
 from numpy import sqrt, pi, arctan, sort
 
 def match_wavelength(template, oifitsobj):
+    """
+    USE WITH CAUTION!
+
+    Convenience function to reinterpolate measurement data from one oifits
+    object to the same wavelength scale as another. Useful for combining
+    similar data sets which have slightly different wavelength scales due to
+    calibration or reduction subtleties.
+
+    This function assumes that the number of measurements in each object is
+    identical. You may have to set oifits.matchstationbyname to True to make it
+    work. It makes no checks that what you are doing makes sense (e.g.
+    different spectral ranges or resolutions). You should really know what you
+    are doing before trying this.
+
+    It returns a new oifits object, which is the given oifitsobj brought to the
+    same wavelength scale as the template. You can then try to add these two
+    together to combine them.
+
+    USE WITH CAUTION!
+    """
 
     oifitsobj = copy.deepcopy(oifitsobj)
     oifitsobj.wavelength = template.wavelength
@@ -24,8 +44,34 @@ def match_wavelength(template, oifitsobj):
             vis._cflux = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis._cflux[idx])
         if vis._cfluxerr != None:
             vis._visamperr = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis._cfluxerr[idx])
-        vis.flag = np.zeros_like(vis._visamp, dtype=bool)
+        # Convert flags to floats (0 or 1), interpolate new flags (0 to 1), and
+        # flag anything which was closer to true than false
+        vis.flag = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis.flag[idx]) > 0.5
         vis.wavelength = tvis.wavelength
+
+    for tvis2, vis2 in zip(template.vis2, oifitsobj.vis2):
+        idx = np.argsort(vis2.wavelength.eff_wave)
+        vis2._vis2data = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2._vis2data[idx])
+        vis2._vis2err = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2._vis2err[idx])
+        vis2.flag = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2.flag[idx]) > 0.5
+        vis2.wavelength = tvis2.wavelength
+
+    for tt3, t3 in zip(template.t3, oifitsobj.t3):
+        idx = np.argsort(t3.wavelength.eff_wave)
+        t3._t3amp = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3amp[idx])
+        t3._t3amperr = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3amperr[idx])
+        t3._t3phi = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3phi[idx])
+        t3._t3phierr = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3phierr[idx])
+        t3.flag = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3.flag[idx]) > 0.5
+        t3.wavelength = tt3.wavelength
+
+    for tflux, flux in zip(template.flux, oifitsobj.flux):
+        idx = np.argsort(flux.wavelength.eff_wave)
+        flux._fluxdata = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux._fluxdata[idx])
+        flux._fluxerr = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux._fluxerr[idx])
+        flux.flag = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux.flag[idx]) > 0.5
+        flux.wavelength = tflux.wavelength
+
 
     return oifitsobj
 

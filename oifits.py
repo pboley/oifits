@@ -846,7 +846,7 @@ class OI_ARRAY(object):
 
         # If position appears to be the same, check that the stations
         # (and ordering) are also the same
-        if (self.station != other.station).any():
+        if not _array_eq(self.station, other.station):
             return False
 
         return True
