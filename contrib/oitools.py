@@ -46,14 +46,14 @@ def match_wavelength(template, oifitsobj):
             vis._visamperr = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis._cfluxerr[idx])
         # Convert flags to floats (0 or 1), interpolate new flags (0 to 1), and
         # flag anything which was closer to true than false
-        vis.flag = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis.flag[idx]) > 0.5
+        vis.flag = np.interp(tvis.wavelength.eff_wave, vis.wavelength.eff_wave[idx], vis.flag[idx], left=1, right=1) > 0.5
         vis.wavelength = tvis.wavelength
 
     for tvis2, vis2 in zip(template.vis2, oifitsobj.vis2):
         idx = np.argsort(vis2.wavelength.eff_wave)
         vis2._vis2data = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2._vis2data[idx])
         vis2._vis2err = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2._vis2err[idx])
-        vis2.flag = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2.flag[idx]) > 0.5
+        vis2.flag = np.interp(tvis2.wavelength.eff_wave, vis2.wavelength.eff_wave[idx], vis2.flag[idx], left=1, right=1) > 0.5
         vis2.wavelength = tvis2.wavelength
 
     for tt3, t3 in zip(template.t3, oifitsobj.t3):
@@ -62,14 +62,14 @@ def match_wavelength(template, oifitsobj):
         t3._t3amperr = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3amperr[idx])
         t3._t3phi = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3phi[idx])
         t3._t3phierr = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3._t3phierr[idx])
-        t3.flag = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3.flag[idx]) > 0.5
+        t3.flag = np.interp(tt3.wavelength.eff_wave, t3.wavelength.eff_wave[idx], t3.flag[idx], left=1, right=1) > 0.5
         t3.wavelength = tt3.wavelength
 
     for tflux, flux in zip(template.flux, oifitsobj.flux):
         idx = np.argsort(flux.wavelength.eff_wave)
         flux._fluxdata = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux._fluxdata[idx])
         flux._fluxerr = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux._fluxerr[idx])
-        flux.flag = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux.flag[idx]) > 0.5
+        flux.flag = np.interp(tflux.wavelength.eff_wave, flux.wavelength.eff_wave[idx], flux.flag[idx], left=1, right=1) > 0.5
         flux.wavelength = tflux.wavelength
 
 
