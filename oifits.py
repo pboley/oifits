@@ -1580,9 +1580,11 @@ class oifits(object):
             revision = 1
             for vis in self.vis:
                 if vis.revision > revision: revision = vis.revision
+                if _notnone(vis.rvis) or _notnone(vis.ivis):
+                    raise NotImplementedError('Writing RVIS/IVIS not implemented')
             for vis in self.vis:
                 nwave = vis.wavelength.eff_wave.size
-                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.phityp, vis.date)
+                key = (arraymap.get(id(vis.array)), wavelengthmap.get(id(vis.wavelength)), corrmap.get(id(vis.corr)), vis.amptyp, vis.ampunit, vis.phityp, vis.date)
                 if key in tables.keys():
                     data = tables[key]
                 else:
@@ -1628,8 +1630,8 @@ class oifits(object):
                         fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time'])]
                 # If TUNITs should be specified, do so
                 if (revision >= 2) and (key[3] == 'correlated flux'):
-                    cols += [fits.Column(name='VISAMP', unit=vis.ampunit, format='%dD'%nwave, array=data['visamp']),
-                             fits.Column(name='VISAMPERR', unit=vis.ampunit, format='%dD'%nwave, array=data['visamperr'])]
+                    cols += [fits.Column(name='VISAMP', unit=key[4], format='%dD'%nwave, array=data['visamp']),
+                             fits.Column(name='VISAMPERR', unit=key[4], format='%dD'%nwave, array=data['visamperr'])]
                 else:
                     cols += [fits.Column(name='VISAMP', format='%dD'%nwave, array=data['visamp']),
                              fits.Column(name='VISAMPERR', format='%dD'%nwave, array=data['visamperr'])]
@@ -1650,12 +1652,12 @@ class oifits(object):
                 hdu.header['EXTVER'] = extvers['OI_VIS']
                 extvers['OI_VIS'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = key[5].strftime('%F'), 'UTC start date of observations'
+                hdu.header['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
                 if key[3]: hdu.header['AMPTYP'] = key[3], 'Type for amplitude measurement'
-                if key[4]: hdu.header['PHITYP'] = key[4], 'Type for phi measurement'
+                if key[5]: hdu.header['PHITYP'] = key[5], 'Type for phi measurement'
                 hdulist.append(hdu)
 
         if self.vis2.size:
