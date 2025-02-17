@@ -1650,7 +1650,7 @@ class oifits(object):
                 hdu.header['EXTVER'] = extvers['OI_VIS']
                 extvers['OI_VIS'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
+                hdu.header['DATE-OBS'] = key[5].strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
@@ -1724,9 +1724,10 @@ class oifits(object):
                 hdu.header['EXTVER'] = extvers['OI_VIS2']
                 extvers['OI_VIS2'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = vis.date.strftime('%F'), 'UTC start date of observations'
+                hdu.header['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
                 hdulist.append(hdu)
 
         if self.t3.size:
@@ -1806,9 +1807,10 @@ class oifits(object):
                 hdu.header['EXTVER'] = extvers['OI_T3']
                 extvers['OI_T3'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = t3.date.strftime('%F'), 'UTC start date of observations'
+                hdu.header['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
                 if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
                 hdulist.append(hdu)
 
         if self.flux.size:
@@ -1860,7 +1862,7 @@ class oifits(object):
                 hdu.header['EXTVER'] = extvers['OI_FLUX']
                 extvers['OI_FLUX'] += 1
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = flux.date.strftime('%F'), 'UTC start date of observations'
+                hdu.header['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
                 if key[0] and not flux.calibrated: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
