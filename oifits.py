@@ -1855,7 +1855,7 @@ class oifits(object):
                        fits.Column(name='FLUXDATA', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxdata']),
                        fits.Column(name='FLUXERR', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxerr'])]
                 # Station should only be present for 'uncalibrated' spectra
-                if not flux.calibrated:
+                if not key[5]:
                     cols += [fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1)]
                 cols += [fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])]
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
@@ -1866,10 +1866,10 @@ class oifits(object):
                 hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
                 hdu.header['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
                 hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[0] and not flux.calibrated: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
+                if key[0] and not key[5]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
                 if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
-                if key[3] and flux.calibrated: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
-                if key[4] and flux.calibrated: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
+                if key[3] and key[5]: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
+                if key[4] and key[5]: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
                 if key[5]: hdu.header['CALSTAT'] = 'C', 'Calibration status'
                 else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
                 hdulist.append(hdu)
