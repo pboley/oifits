@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.transforms import offset_copy
 from matplotlib.patches import Rectangle
 from numpy import sqrt, pi, arctan, sort
+from numpy.random import normal
 
 def match_wavelength(template, oifitsobj):
     """
@@ -74,6 +75,25 @@ def match_wavelength(template, oifitsobj):
 
 
     return oifitsobj
+
+def addnoise_oif(oif):
+    "Add Gaussian noise to OI_VIS, OI_VIS2, OI_T3 and OI_FLUX."
+
+    for vis in oif.vis:
+        vis._visamp[:] = normal(vis._visamp, vis._visamperr)
+        vis._visphi[:] = normal(vis._visphi, vis._visphierr)
+
+    for vis2 in oif.vis2:
+        vis2._vis2data[:] = normal(vis2._vis2data, vis2._vis2err)
+
+    for t3 in oif.t3:
+        t3._t3amp[:] = normal(t3._t3amp, t3._t3amperr)
+        t3._t3phi[:] = normal(t3._t3phi, t3._t3phierr)
+
+    for flux in oif.flux:
+        flux._fluxdata[:] = normal(flux._fluxdata, flux._fluxerr)
+
+    return oif
 
 def average_vector(vector, npix):
 
@@ -370,7 +390,7 @@ def plot_phases(oidata, uvplot=False, legend=False):
         title += ', %s'%(name)
 
     ax1.set_title(title)
-    ax1.set_xlabel('Wavelength ($\mu$m)')
+    ax1.set_xlabel(r'Wavelength ($\mu$m)')
     ax1.set_ylabel('Differential phase')
     if uvplot:
         ax2.set_title(title)
@@ -446,7 +466,7 @@ def plot_visibilities(oidata, uvplot=False, legend=False, ploterror=False):
         title += ', %s'%(name)
 
     ax1.set_title(title)
-    ax1.set_xlabel('Wavelength ($\mu$m)')
+    ax1.set_xlabel(r'Wavelength ($\mu$m)')
     ax1.set_ylabel('Visibility')
     if uvplot:
         ax2.set_title(title)
@@ -515,7 +535,7 @@ def plot_gaussian_widths_vs_wavelength(oidata, uvplot=False, legend=False, plote
         title += ', %s'%(name)
 
     ax1.set_title(title)
-    ax1.set_xlabel('Wavelength ($\mu$m)')
+    ax1.set_xlabel(r'Wavelength ($\mu$m)')
     ax1.set_ylabel('Gaussian width (mas)')
     if uvplot:
         ax2.set_title(title)
@@ -586,7 +606,7 @@ def plot_cflux(oidata, uvplot=False, legend=False, ploterror=False):
         title += ', %s'%(name)
 
     ax1.set_title(title)
-    ax1.set_xlabel('Wavelength ($\mu$m)')
+    ax1.set_xlabel(r'Wavelength ($\mu$m)')
     ax1.set_ylabel('Correlated flux (Jy)')
     if uvplot:
         ax2.set_title(title)
@@ -657,7 +677,7 @@ def plot_vis2(oidata, uvplot=False, legend=False, ploterror=False):
         title += ', %s'%(name)
 
     ax1.set_title(title)
-    ax1.set_xlabel('Wavelength ($\mu$m)')
+    ax1.set_xlabel(r'Wavelength ($\mu$m)')
     ax1.set_ylabel('Visibility')
     if uvplot:
         ax2.set_title(title)
