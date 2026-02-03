@@ -1401,7 +1401,7 @@ class oifits(object):
             hdr.pop('DATE')
         except KeyError:
             pass
-        hdr['DATE'] = datetime.datetime.now().strftime(format='%FT%T'), 'Date the HDU was written'
+        hdr['DATE'] = datetime.datetime.utcnow().strftime(format='%FT%T'), 'Date the HDU was written'
         # Remove old oifits.py comments if they are present
         remcomments = []
         try:
