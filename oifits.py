@@ -94,8 +94,8 @@ from packaging import version
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='25 January 2025'
-__version__ = '0.6.1'
+__date__ ='3 February 2026'
+__version__ = '0.6.2-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
 matchtargetbyname = False
@@ -1396,11 +1396,16 @@ class oifits(object):
 
         hdulist = fits.HDUList()
         hdu = fits.PrimaryHDU(header=self.header)
-        hdu.header['DATE'] = datetime.datetime.now().strftime(format='%F'), 'Creation date'
+        hdr = hdu.header
+        try:
+            hdr.pop('DATE')
+        except KeyError:
+            pass
+        hdr['DATE'] = datetime.datetime.now().strftime(format='%FT%T'), 'Date the HDU was written'
         # Remove old oifits.py comments if they are present
         remcomments = []
         try:
-            for i, comment in enumerate(hdu.header['COMMENT']):
+            for i, comment in enumerate(hdr['COMMENT']):
                 if (('Written by OIFITS Python module' in str(comment)) |
                     ('http://www.mpia-hd.mpg.de/homes/boley/oifits/' in str(comment)) |
                     ('http://astro.ins.urfu.ru/pages/~pboley/oifits/' in str(comment)) |
@@ -1413,10 +1418,29 @@ class oifits(object):
         # ordering can get messed up and header.ascard.remove can fail
         remcomments.reverse()
         for i in remcomments:
-            del hdu.header[('COMMENT', i)]
+            del hdr[('COMMENT', i)]
         # Add (new) advertisement
-        hdu.header.add_comment('Written by OIFITS Python module version %s'%__version__)
-        hdu.header.add_comment('https://github.com/pboley/oifits')
+        hdr.add_comment('Written by OIFITS Python module version %s'%__version__)
+        hdr.add_comment('https://github.com/pboley/oifits')
+        # Put in some (not all; DATE-OBS for example is redundant, useless and
+        # ambiguous) mandatory comments if this is an oifits2 object
+        if self.getoifitsver() >= 2:
+            hdr['CONTENT'] = 'OIFITS%d'%self.getoifitsver() # Could change in the future
+            if len(self.array) == 1:
+                hdr['TELESCOP'] = list(self.array.keys())[0]
+            else:
+                hdr['TELESCOP'] = 'MULTI'
+            if len(self.wavelength) == 1:
+                hdr['INSTRUME'] = list(self.wavelength.keys())[0]
+            else:
+                hdr['INSTRUME'] = 'MULTI'
+            if len(self.target) == 1:
+                hdr['OBJECT'] = self.target[0].target
+                hdr['RA'] = float(self.target[0].raep0)
+                hdr['DEC'] = float(self.target[0].decep0)
+                hdr['EQUINOX'] = self.target[0].equinox
+            else:
+                hdr['OBJECT'] = 'MULTI'
         hdulist.append(hdu)
 
         wavelengthmap = {}
@@ -1426,11 +1450,12 @@ class oifits(object):
                 fits.Column(name='EFF_WAVE', format='1E', unit='METERS', array=wavelength.eff_wave),
                 fits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
                 )))
-            hdu.header['EXTNAME'] = 'OI_WAVELENGTH'
-            hdu.header['EXTVER'] = extvers['OI_WAVELENGTH']
+            hdr = hdu.header
+            hdr['EXTNAME'] = 'OI_WAVELENGTH'
+            hdr['EXTVER'] = extvers['OI_WAVELENGTH']
             extvers['OI_WAVELENGTH'] += 1
-            hdu.header['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
-            hdu.header['INSNAME'] = insname, 'Name of detector, for cross-referencing'
+            hdr['OI_REVN'] = wavelength.revision, 'Revision number of the table definition'
+            hdr['INSNAME'] = insname, 'Name of detector, for cross-referencing'
             hdulist.append(hdu)
 
         corrmap = {}
@@ -1441,11 +1466,12 @@ class oifits(object):
                 fits.Column(name='JINDX', format='1J', array=corr.iindx),
                 fits.Column(name='CORR', format='D1', array=corr.corr)
                 )))
-            hdu.header['EXTNAME'] = 'OI_CORR'
-            hdu.header['EXTVER'] = extvers['OI_CORR']
+            hdr = hdu.header
+            hdr['EXTNAME'] = 'OI_CORR'
+            hdr['EXTVER'] = extvers['OI_CORR']
             extvers['OI_CORR'] += 1
-            hdu.header['OI_REVN'] = corr.revision, 'Revision number of the table definition'
-            hdu.header['CORRNAME'] = corrname
+            hdr['OI_REVN'] = corr.revision, 'Revision number of the table definition'
+            hdr['CORRNAME'] = corrname
             hdulist.append(hdu)
 
         targetmap = {}
@@ -1516,10 +1542,11 @@ class oifits(object):
                 cols.append(fits.Column(name='CATEGORY', format='3A', array=category))
 
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
-            hdu.header['EXTNAME'] = 'OI_TARGET'
-            hdu.header['EXTVER'] = extvers['OI_TARGET']
+            hdr = hdu.header
+            hdr['EXTNAME'] = 'OI_TARGET'
+            hdr['EXTVER'] = extvers['OI_TARGET']
             extvers['OI_TARGET'] += 1
-            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
+            hdr['OI_REVN'] = revision, 'Revision number of the table definition'
             hdulist.append(hdu)
 
         arraymap = {}
@@ -1559,15 +1586,18 @@ class oifits(object):
                     cols.append(fits.Column(name='FOV', format='D1', array=fov))
                     cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
-            hdu.header['EXTNAME'] = 'OI_ARRAY'
-            hdu.header['EXTVER'] = extvers['OI_ARRAY']
+            else:
+                raise NotImplementedError('Attempting to write array with no stations defined.')
+            hdr = hdu.header
+            hdr['EXTNAME'] = 'OI_ARRAY'
+            hdr['EXTVER'] = extvers['OI_ARRAY']
             extvers['OI_ARRAY'] += 1
-            hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-            hdu.header['ARRNAME'] = arrname, 'Array name, for cross-referencing'
-            hdu.header['FRAME'] = array.frame, 'Coordinate frame'
-            hdu.header['ARRAYX'] = array.arrxyz[0], 'Array center x coordinate (m)'
-            hdu.header['ARRAYY'] = array.arrxyz[1], 'Array center y coordinate (m)'
-            hdu.header['ARRAYZ'] = array.arrxyz[2], 'Array center z coordinate (m)'
+            hdr['OI_REVN'] = revision, 'Revision number of the table definition'
+            hdr['ARRNAME'] = arrname, 'Array name, for cross-referencing'
+            hdr['FRAME'] = array.frame, 'Coordinate frame'
+            hdr['ARRAYX'] = array.arrxyz[0], 'Array center x coordinate (m)'
+            hdr['ARRAYY'] = array.arrxyz[1], 'Array center y coordinate (m)'
+            hdr['ARRAYZ'] = array.arrxyz[2], 'Array center z coordinate (m)'
             hdulist.append(hdu)
 
         if self.vis.size:
@@ -1642,22 +1672,22 @@ class oifits(object):
                          fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
                          fits.Column(name='FLAG', format='%dL'%nwave)]
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
-
+                hdr = hdu.header
                 # Setting the data of logical field via the
                 # fits.Column call above with length > 1 (eg
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header['EXTNAME'] = 'OI_VIS'
-                hdu.header['EXTVER'] = extvers['OI_VIS']
+                hdr['EXTNAME'] = 'OI_VIS'
+                hdr['EXTVER'] = extvers['OI_VIS']
                 extvers['OI_VIS'] += 1
-                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
-                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
-                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
-                if key[3]: hdu.header['AMPTYP'] = key[3], 'Type for amplitude measurement'
-                if key[5]: hdu.header['PHITYP'] = key[5], 'Type for phi measurement'
+                hdr['OI_REVN'] = revision, 'Revision number of the table definition'
+                hdr['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
+                if key[0]: hdr['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdr['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdr['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                if key[3]: hdr['AMPTYP'] = key[3], 'Type for amplitude measurement'
+                if key[5]: hdr['PHITYP'] = key[5], 'Type for phi measurement'
                 hdulist.append(hdu)
 
         if self.vis2.size:
@@ -1717,19 +1747,20 @@ class oifits(object):
                     fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
                     fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
                     ]))
+                hdr = hdu.header
                 # Setting the data of logical field via the
                 # fits.Column call above with length > 1 (eg
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header['EXTNAME'] = 'OI_VIS2'
-                hdu.header['EXTVER'] = extvers['OI_VIS2']
+                hdr['EXTNAME'] = 'OI_VIS2'
+                hdr['EXTVER'] = extvers['OI_VIS2']
                 extvers['OI_VIS2'] += 1
-                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
-                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
-                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                hdr['OI_REVN'] = revision, 'Revision number of the table definition'
+                hdr['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
+                if key[0]: hdr['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdr['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdr['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
                 hdulist.append(hdu)
 
         if self.t3.size:
@@ -1800,19 +1831,20 @@ class oifits(object):
                     fits.Column(name='STA_INDEX', format='3I', array=data['sta_index'], null=-1),
                     fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
                     )))
+                hdr = hdu.header
                 # Setting the data of logical field via the
                 # fits.Column call above with length > 1 (eg
                 # format='171L' above) seems to be broken, atleast as
                 # of PyFITS 2.2.2
                 hdu.data.field('FLAG').setfield(data['flag'], bool)
-                hdu.header['EXTNAME'] = 'OI_T3'
-                hdu.header['EXTVER'] = extvers['OI_T3']
+                hdr['EXTNAME'] = 'OI_T3'
+                hdr['EXTVER'] = extvers['OI_T3']
                 extvers['OI_T3'] += 1
-                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
-                if key[0]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
-                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                hdr['OI_REVN'] = revision, 'Revision number of the table definition'
+                hdr['DATE-OBS'] = key[3].strftime('%F'), 'UTC start date of observations'
+                if key[0]: hdr['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY'
+                hdr['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[2]: hdr['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
                 hdulist.append(hdu)
 
         if self.flux.size:
@@ -1848,7 +1880,7 @@ class oifits(object):
             for key in tables.keys():
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
-                
+
                 cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
                        fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
                        fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
@@ -1859,19 +1891,20 @@ class oifits(object):
                     cols += [fits.Column(name='STA_INDEX', format='1I', array=data['sta_index'], null=-1)]
                 cols += [fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])]
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
+                hdr = hdu.header
 
-                hdu.header['EXTNAME'] = 'OI_FLUX'
-                hdu.header['EXTVER'] = extvers['OI_FLUX']
+                hdr['EXTNAME'] = 'OI_FLUX'
+                hdr['EXTVER'] = extvers['OI_FLUX']
                 extvers['OI_FLUX'] += 1
-                hdu.header['OI_REVN'] = revision, 'Revision number of the table definition'
-                hdu.header['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
-                hdu.header['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
-                if key[0] and not key[5]: hdu.header['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
-                if key[2]: hdu.header['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
-                if key[3] and key[5]: hdu.header['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
-                if key[4] and key[5]: hdu.header['FOVTYPE'] = key[4], 'Model for FOV'
-                if key[5]: hdu.header['CALSTAT'] = 'C', 'Calibration status'
-                else: hdu.header['CALSTAT'] = 'U', 'Calibration status'
+                hdr['OI_REVN'] = revision, 'Revision number of the table definition'
+                hdr['DATE-OBS'] = key[6].strftime('%F'), 'UTC start date of observations'
+                hdr['INSNAME'] = key[1], 'Identifies corresponding OI_WAVELENGTH table'
+                if key[0] and not key[5]: hdr['ARRNAME'] = key[0], 'Identifies corresponding OI_ARRAY table'
+                if key[2]: hdr['CORRNAME'] = key[2], 'Identifies corresponding OI_CORR table'
+                if key[3] and key[5]: hdr['FOV'] = key[3], 'Area over which flux is integrated (arcsec)'
+                if key[4] and key[5]: hdr['FOVTYPE'] = key[4], 'Model for FOV'
+                if key[5]: hdr['CALSTAT'] = 'C', 'Calibration status'
+                else: hdr['CALSTAT'] = 'U', 'Calibration status'
                 hdulist.append(hdu)
 
         hdulist.writeto(filename, overwrite=overwrite)
