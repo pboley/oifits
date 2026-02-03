@@ -25,6 +25,15 @@ however since this information can now be saved in a fully standarized way
 tables with correlated flux information appended into sets of two OI_VIS rev2
 tables (one for the visibility amplitude, one for the correlated flux).
 
+## `JMenu_to_oifits2.py`
+
+A further example similar to `cflux_to_oifits2.py` for converting the OIFITS1
+files from [Menu et al.,
+2015](https://ui.adsabs.harvard.edu/abs/2015A%26A...581A.107M/abstract) to
+OIFITS2. The original files contain the PRISM and GRISM data from MIDI in
+non-standard tables; they can be found on the OiDB
+[here](https://oidb.jmmc.fr/collection.html?id=9e568851-345e-42dc-aaf7-6ad0873e3b1b).
+
 ## `make_vlti_array.py`
 
 ![VLTI array](VLTI-array.png)
