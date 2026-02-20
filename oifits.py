@@ -1897,7 +1897,7 @@ class oifits(object):
                 % (len(self.inspol), _plurals(len(self.inspol)))
             )
 
-    def save(self, filename, overwrite=False):
+    def save(self, filename, overwrite=False, checksum=True):
         """Write the contents of the oifits object to a file in OIFITS
         format."""
 
@@ -2775,10 +2775,11 @@ class oifits(object):
                     hdr["CALSTAT"] = "U", "Calibration status"
                 hdulist.append(hdu)
 
-        hdulist.writeto(filename, overwrite=overwrite)
+        hdulist.writeto(filename, overwrite=overwrite, checksum=checksum)
 
 
-def open(filename, quiet=False):
+
+def open(filename, quiet=False, checksum=True):
     """Open an OIFITS file."""
 
     newobj = oifits()
@@ -2790,7 +2791,7 @@ def open(filename, quiet=False):
     if type(filename) == fits.hdu.hdulist.HDUList:
         hdulist = filename
     else:
-        hdulist = fits.open(filename)
+        hdulist = fits.open(filename, checksum=checksum)
     # Save the primary header
     newobj.header = hdulist[0].header.copy()
 
