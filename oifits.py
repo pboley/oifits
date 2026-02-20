@@ -175,11 +175,12 @@ def _notnone(x):
 
     return type(x) != type(None)
 
-class OI_TARGET(object):
+class OI_TARGET:
 
     def __init__(self, target, raep0, decep0, equinox=2000.0, ra_err=0.0, dec_err=0.0,
                  sysvel=0.0, veltyp='TOPOCENT', veldef='OPTICAL', pmra=0.0, pmdec=0.0,
-                 pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN', category=None, revision=1):
+                 pmra_err=0.0, pmdec_err=0.0, parallax=0.0, para_err=0.0, spectyp='UNKNOWN', category=None,
+                 revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_TARGET revision %d not implemented yet'%revision, UserWarning)
@@ -203,7 +204,10 @@ class OI_TARGET(object):
         self.spectyp = spectyp
         if revision >= 2:
             self.category = category
-        else: self.category = None
+        else:
+            self.category = None
+
+        self.header = header
 
 
     def __eq__(self, other):
@@ -241,9 +245,9 @@ class OI_TARGET(object):
     def info(self):
         print(str(self))
 
-class OI_WAVELENGTH(object):
+class OI_WAVELENGTH:
 
-    def __init__(self, eff_wave, eff_band=None, revision=1):
+    def __init__(self, eff_wave, eff_band=None, revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_WAVELENGTH revision %d not implemented yet'%revision, UserWarning)
@@ -253,6 +257,7 @@ class OI_WAVELENGTH(object):
         if _isnone(eff_band):
             eff_band = np.zeros_like(eff_wave)
         self.eff_band = np.array(eff_band, dtype=double).reshape(-1)
+        self.header = header
 
     def __eq__(self, other):
 
@@ -275,7 +280,7 @@ class OI_WAVELENGTH(object):
 
 class OI_CORR(object):
 
-    def __init__(self, iindx, jindx, corr, revision=1):
+    def __init__(self, iindx, jindx, corr, revision=1, header=None):
 
         if revision > 1:
             warnings.warn('OI_CORR revision %d not implemented yet'%revision, UserWarning)
@@ -284,6 +289,7 @@ class OI_CORR(object):
         self.iindx = iindx
         self.jindx = jindx
         self.corr = corr
+        self.header = header
 
     def __eq__(self, other):
 
@@ -304,7 +310,7 @@ class OI_CORR(object):
     def info(self):
         print(str(self))
 
-class OI_VIS(object):
+class OI_VIS:
     """
     Class for storing visibility amplitude and differential phase data.
     To access the data, use the following hidden attributes:
@@ -320,7 +326,7 @@ class OI_VIS(object):
                  corrindx_visamp=None, corrindx_visphi=None, corrindx_rvis=None, corrindx_ivis=None,
                  amptyp=None, phityp=None, amporder=None, phiorder=None,
                  ampunit=None, rvisunit=None, ivisunit=None,
-                 visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None):
+                 visrefmap=None, rvis=None, rviserr=None, ivis=None, iviserr=None, header=None):
 
         if revision > 2:
             warnings.warn('OI_VIS revision %d not implemented yet'%revision, UserWarning)
@@ -336,10 +342,16 @@ class OI_VIS(object):
         self._visamperr = np.array(visamperr, dtype=double).reshape(-1)
         self._visphi = np.array(visphi, dtype=double).reshape(-1)
         self._visphierr = np.array(visphierr, dtype=double).reshape(-1)
-        if _notnone(cflux): self._cflux = np.array(cflux, dtype=double).reshape(-1)
-        else: self._cflux = None
-        if _notnone(cfluxerr): self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
-        else: self._cfluxerr = None
+        if _notnone(cflux):
+            self._cflux = np.array(cflux, dtype=double).reshape(-1)
+        else:
+            self._cflux = None
+
+        if _notnone(cfluxerr):
+            self._cfluxerr = np.array(cfluxerr, dtype=double).reshape(-1)
+        else:
+            self._cfluxerr = None
+
         self.flag = np.array(flag, dtype=bool).reshape(-1)
         self.ucoord = ucoord
         self.vcoord = vcoord
@@ -362,6 +374,7 @@ class OI_VIS(object):
         self.ivis = ivis
         self.iviserr = iviserr
         self.corr = corr
+        self.header = header
 
     def __eq__(self, other):
 
@@ -440,7 +453,7 @@ class OI_VIS(object):
     def info(self):
         print(str(self))
 
-class OI_VIS2(object):
+class OI_VIS2:
     """
     Class for storing squared visibility amplitude data.
     To access the data, use the following hidden attributes:
@@ -449,7 +462,8 @@ class OI_VIS2(object):
 
     """
     def __init__(self, timeobs, int_time, vis2data, vis2err, flag, ucoord, vcoord, wavelength,
-                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), date=None, revision=1):
+                 target, corr=None, corrindx_vis2data=None, array=None, station=(None, None), date=None,
+                 revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_VIS2 revision %d not implemented yet'%revision, UserWarning)
@@ -470,6 +484,7 @@ class OI_VIS2(object):
         # Only used if revision >= 2
         self.corr = corr
         self.corrindx_vis2data = corrindx_vis2data
+        self.header = header
 
     def __eq__(self, other):
 
@@ -524,7 +539,7 @@ class OI_VIS2(object):
         print(str(self))
 
 
-class OI_T3(object):
+class OI_T3:
     """
     Class for storing triple product and closure phase data.
     To access the data, use the following hidden attributes:
@@ -536,7 +551,7 @@ class OI_T3(object):
     def __init__(self, timeobs, int_time, t3amp, t3amperr, t3phi, t3phierr, flag, u1coord,
                  v1coord, u2coord, v2coord, wavelength, target, corr=None,
                  corrindx_t3amp=None, corrindx_t3phi=None,
-                 array=None, station=(None,None,None), date=None, revision=1):
+                 array=None, station=(None,None,None), date=None, revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_T3 revision %d not implemented yet'%revision, UserWarning)
@@ -562,6 +577,7 @@ class OI_T3(object):
         self.corr = corr
         self.corrindx_t3amp = corrindx_t3amp
         self.corrindx_t3phi = corrindx_t3phi
+        self.header = header
 
     def __eq__(self, other):
 
@@ -621,7 +637,7 @@ class OI_T3(object):
     def info(self):
         print(str(self))
 
-class OI_FLUX(object):
+class OI_FLUX:
     """
     Class for storing raw or calibrated flux measurements.
     To access the data, use the following hidden attributes:
@@ -632,7 +648,7 @@ class OI_FLUX(object):
 
     def __init__(self, timeobs, int_time, fluxdata, fluxerr, flag,
                  wavelength, target, calibrated, fluxunit, fluxerrunit, corr=None, array=None, station=None,
-                 fov=None, fovtype=None, date=None, revision=1):
+                 fov=None, fovtype=None, date=None, revision=1, header=None):
 
         if revision > 1:
             warnings.warn('OI_FLUX revision %d not implemented yet'%revision, UserWarning)
@@ -654,6 +670,7 @@ class OI_FLUX(object):
         self.calibrated = calibrated
         self.fluxunit = fluxunit
         self.fluxerrunit = fluxerrunit
+        self.header = header
 
     def __eq__(self, other):
 
@@ -709,11 +726,12 @@ class OI_FLUX(object):
     def info(self):
         print(str(self))
 
-class OI_STATION(object):
+class OI_STATION:
     """ This class corresponds to a single row (i.e. single
     station/telescope) of an OI_ARRAY table."""
 
-    def __init__(self, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None], fov=None, fovtype=None, revision=1):
+    def __init__(self, tel_name=None, sta_name=None, diameter=None, staxyz=[None, None, None],
+                 fov=None, fovtype=None, revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_ARRAY revision %d not implemented yet'%revision, UserWarning)
@@ -729,6 +747,8 @@ class OI_STATION(object):
             self.fovtype = fovtype
         else:
             self.fov = self.fovtype = None
+
+        self.header = header
 
     def __eq__(self, other):
 
@@ -753,9 +773,10 @@ class OI_STATION(object):
         else:
             return '%s/%s (%g m)'%(self.sta_name, self.tel_name, self.diameter)
 
-class OI_INSPOL(object):
+class OI_INSPOL:
 
-    def __init__(self, timestart, timeend, orient, model, jxx, jyy, jxy, jyx, wavelength, target, array, station, date=None, revision=1):
+    def __init__(self, timestart, timeend, orient, model, jxx, jyy, jxy, jyx, wavelength,
+                 target, array, station, date=None, revision=1, header=None):
 
         if revision > 1:
             warnings.warn('OI_INSPOL revision %d not implemented yet'%revision, UserWarning)
@@ -774,6 +795,7 @@ class OI_INSPOL(object):
         self.target = target
         self.array = array
         self.station = station
+        self.header = header
 
     def __eq__(self, other):
 
@@ -805,11 +827,11 @@ class OI_INSPOL(object):
     def info(self):
         print(str(self))
 
-class OI_ARRAY(object):
+class OI_ARRAY:
     """Contains all the data for a single OI_ARRAY table.  Note the
     hidden convenience attributes latitude, longitude, and altitude."""
 
-    def __init__(self, frame, arrxyz, stations=(), revision=1):
+    def __init__(self, frame, arrxyz, stations=(), revision=1, header=None):
 
         if revision > 2:
             warnings.warn('OI_ARRAY revision %d not implemented yet'%revision, UserWarning)
@@ -832,6 +854,8 @@ class OI_ARRAY(object):
                 fovtype = station['FOVTYPE']
 
             self.station = np.append(self.station, OI_STATION(tel_name=tel_name, sta_name=sta_name, diameter=diameter, staxyz=staxyz, fov=fov, fovtype=fovtype, revision=revision))
+
+        self.header = header
 
     def __eq__(self, other):
 
@@ -899,7 +923,7 @@ class OI_ARRAY(object):
 
         raise LookupError('No such station %s'%name)
 
-class oifits(object):
+class oifits:
 
     def __init__(self):
 
@@ -1941,7 +1965,7 @@ def open(filename, quiet=False, checksum=True):
         if hdu.name == 'OI_WAVELENGTH':
             revision = header['OI_REVN']
             insname = header['INSNAME']
-            newobj.wavelength[insname] = OI_WAVELENGTH(data['EFF_WAVE'], data['EFF_BAND'], revision=revision)
+            newobj.wavelength[insname] = OI_WAVELENGTH(data['EFF_WAVE'], data['EFF_BAND'], revision=revision, header=header)
         elif hdu.name == 'OI_TARGET':
             revision = header['OI_REVN']
             for row in data:
@@ -1955,7 +1979,8 @@ def open(filename, quiet=False, checksum=True):
                                    sysvel=row['SYSVEL'], veltyp=row['VELTYP'], veldef=row['VELDEF'],
                                    pmra=row['PMRA'], pmdec=row['PMDEC'], pmra_err=row['PMRA_ERR'],
                                    pmdec_err=row['PMDEC_ERR'], parallax=row['PARALLAX'],
-                                   para_err=row['PARA_ERR'], spectyp=row['SPECTYP'], category=category, revision=revision)
+                                   para_err=row['PARA_ERR'], spectyp=row['SPECTYP'], category=category,
+                                   revision=revision, header=header)
                 newobj.target = np.append(newobj.target, target)
                 targetmap[target_id] = target
         elif hdu.name == 'OI_ARRAY':
@@ -1975,14 +2000,14 @@ def open(filename, quiet=False, checksum=True):
                             c = EarthLocation(lat=c.lat, lon=c.lon, height=oldheight)
                             arrxyz = np.array([c.value[0], c.value[1], c.value[2]]) # c.value is numpy.void, which causes problems
                         break
-            newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision)
+            newobj.array[arrname] = OI_ARRAY(frame, arrxyz, stations=data, revision=revision, header=header)
             # Save the sta_index for each array, as we will need it
             # later to match measurements to stations
             sta_indices[arrname] = data['sta_index']
         elif hdu.name == 'OI_CORR':
             revision = header['OI_REVN']
             corrname = header['CORRNAME']
-            newobj.corr[corrname] = OI_CORR(data['iindx'], data['jindx'], data['corr'], revision=revision)
+            newobj.corr[corrname] = OI_CORR(data['iindx'], data['jindx'], data['corr'], revision=revision, header=header)
 
     # Then get any science measurements
     for hdu in hdulist:
@@ -2071,7 +2096,7 @@ def open(filename, quiet=False, checksum=True):
                                                           amptyp=amptyp, phityp=phityp, amporder=amporder, phiorder=phiorder,
                                                           ampunit=ampunit, rvisunit=rvisunit, ivisunit=ivisunit,
                                                           visrefmap=visrefmap,
-                                                          rvis=rvis, rviserr=rviserr, ivis=ivis, iviserr=iviserr))
+                                                          rvis=rvis, rviserr=rviserr, ivis=ivis, iviserr=iviserr, header=header))
         elif hdu.name == 'OI_VIS2':
             # OIFITS2 parameters which default to None for OIFITS1
             corr = corrindx_vis2data = None
@@ -2101,7 +2126,7 @@ def open(filename, quiet=False, checksum=True):
                                                              vis2err=vis2err, flag=flag, ucoord=ucoord, vcoord=vcoord,
                                                              wavelength=wavelength, corr=corr, corrindx_vis2data=corrindx_vis2data,
                                                              target=target, array=array,
-                                                             station=station, date=date, revision=revision))
+                                                             station=station, date=date, revision=revision, header=header))
         elif hdu.name == 'OI_T3':
             # OIFITS2 parameters which default to None for OIFITS1
             corr = corrindx_t3amp = corrindx_t3phi = None
@@ -2138,7 +2163,8 @@ def open(filename, quiet=False, checksum=True):
                                                        flag=flag, u1coord=u1coord, v1coord=v1coord, u2coord=u2coord,
                                                        v2coord=v2coord, wavelength=wavelength, corr=corr,
                                                        corrindx_t3amp=corrindx_t3amp, corrindx_t3phi=corrindx_t3phi,
-                                                       target=target, array=array, station=station, date=date, revision=revision))
+                                                       target=target, array=array, station=station, date=date,
+                                                       revision=revision, header=header))
         elif hdu.name == 'OI_FLUX':
             for row in data:
                 timeobs = _mjdzero+datetime.timedelta(days=row['MJD'])
@@ -2175,7 +2201,7 @@ def open(filename, quiet=False, checksum=True):
                                         wavelength=wavelength, corr=corr, target=target,
                                         array=array, station=station, calibrated=calibrated,
                                         fov=fov, fovtype=fovtype, fluxunit=fluxunit, fluxerrunit=fluxerrunit,
-                                        date=date, revision=revision))
+                                        date=date, revision=revision, header=header))
         elif hdu.name == 'OI_INSPOL':
             for row in data:
                 target = targetmap[row['TARGET_ID']]
@@ -2186,7 +2212,7 @@ def open(filename, quiet=False, checksum=True):
                 newobj.inspol = np.append(newobj.inspol,
                                           OI_INSPOL(timestart, timeend, header['ORIENT'], header['MODEL'],
                                           row['JXX'], row['JYY'], row['JXY'], row['JYX'],
-                                          wavelength, target, array, station, date=date, revision=revision))
+                                          wavelength, target, array, station, date=date, revision=revision, header=header))
 
     hdulist.close()
     if not quiet:
