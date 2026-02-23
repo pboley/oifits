@@ -44,9 +44,11 @@ data = np.genfromtxt('baseline_data.txt', usecols=(0,3,4), dtype=[('name', 'U2')
 t = Table()
 t['STA_NAME'] = t['TEL_NAME'] = data['name']
 t['DIAMETER'] = [8.2 if 'U' in x else 1.8 for x in data['name']]
+t['FOVTYPE'] = 'RADIUS'
+t['FOV'] = [0.52/2 if 'U' in x else 2.29/2 for x in data['name']]
 t['STAXYZ'] = np.array([data['N']*northx+data['E']*eastx, data['N']*northy+data['E']*easty, data['N']*northz]).T
 
-array = oifits.OI_ARRAY('GEOCENTRIC', arrxyz, t)
+array = oifits.OI_ARRAY('GEOCENTRIC', arrxyz, t, revision=2)
 
 oifitsobj = oifits.oifits()
 oifitsobj.array['VLTI'] = array
