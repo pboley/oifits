@@ -94,7 +94,7 @@ from packaging import version
 
 __author__ = "Paul Boley"
 __email__ = "pboley@gmail.com"
-__date__ ='3 February 2026'
+__date__ ='17 March 2026'
 __version__ = '0.6.2-dev'
 _mjdzero = datetime.datetime(1858, 11, 17)
 
@@ -1447,8 +1447,8 @@ class oifits(object):
         for insname, wavelength in self.wavelength.items():
             wavelengthmap[id(wavelength)] = insname
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
-                fits.Column(name='EFF_WAVE', format='1E', unit='METERS', array=wavelength.eff_wave),
-                fits.Column(name='EFF_BAND', format='1E', unit='METERS', array=wavelength.eff_band)
+                fits.Column(name='EFF_WAVE', format='1E', unit='m', array=wavelength.eff_wave),
+                fits.Column(name='EFF_BAND', format='1E', unit='m', array=wavelength.eff_band)
                 )))
             hdr = hdu.header
             hdr['EXTNAME'] = 'OI_WAVELENGTH'
@@ -1523,20 +1523,20 @@ class oifits(object):
 
             cols = [fits.Column(name='TARGET_ID', format='1I', array=target_id),
                     fits.Column(name='TARGET', format='16A', array=target),
-                    fits.Column(name='RAEP0', format='1D', unit='DEGREES', array=raep0),
-                    fits.Column(name='DECEP0', format='1D', unit='DEGREES', array=decep0),
-                    fits.Column(name='EQUINOX', format='1E', unit='YEARS', array=equinox),
-                    fits.Column(name='RA_ERR', format='1D', unit='DEGREES', array=ra_err),
-                    fits.Column(name='DEC_ERR', format='1D', unit='DEGREES', array=dec_err),
-                    fits.Column(name='SYSVEL', format='1D', unit='M/S', array=sysvel),
+                    fits.Column(name='RAEP0', format='1D', unit='deg', array=raep0),
+                    fits.Column(name='DECEP0', format='1D', unit='deg', array=decep0),
+                    fits.Column(name='EQUINOX', format='1E', unit='yr', array=equinox),
+                    fits.Column(name='RA_ERR', format='1D', unit='deg', array=ra_err),
+                    fits.Column(name='DEC_ERR', format='1D', unit='deg', array=dec_err),
+                    fits.Column(name='SYSVEL', format='1D', unit='m/s', array=sysvel),
                     fits.Column(name='VELTYP', format='8A', array=veltyp),
                     fits.Column(name='VELDEF', format='8A', array=veldef),
-                    fits.Column(name='PMRA', format='1D', unit='DEG/YR', array=pmra),
-                    fits.Column(name='PMDEC', format='1D', unit='DEG/YR', array=pmdec),
-                    fits.Column(name='PMRA_ERR', format='1D', unit='DEG/YR', array=pmra_err),
-                    fits.Column(name='PMDEC_ERR', format='1D', unit='DEG/YR', array=pmdec_err),
-                    fits.Column(name='PARALLAX', format='1E', unit='DEGREES', array=parallax),
-                    fits.Column(name='PARA_ERR', format='1E', unit='DEGREES', array=para_err),
+                    fits.Column(name='PMRA', format='1D', unit='deg/yr', array=pmra),
+                    fits.Column(name='PMDEC', format='1D', unit='deg/yr', array=pmdec),
+                    fits.Column(name='PMRA_ERR', format='1D', unit='deg/yr', array=pmra_err),
+                    fits.Column(name='PMDEC_ERR', format='1D', unit='deg/yr', array=pmdec_err),
+                    fits.Column(name='PARALLAX', format='1E', unit='deg', array=parallax),
+                    fits.Column(name='PARA_ERR', format='1E', unit='deg', array=para_err),
                     fits.Column(name='SPECTYP', format='16A', array=spectyp)]
             if revision >= 2:
                 cols.append(fits.Column(name='CATEGORY', format='3A', array=category))
@@ -1580,10 +1580,10 @@ class oifits(object):
                 cols = [fits.Column(name='TEL_NAME', format='16A', array=tel_name),
                         fits.Column(name='STA_NAME', format='16A', array=sta_name),
                         fits.Column(name='STA_INDEX', format='1I', array=sta_index),
-                        fits.Column(name='DIAMETER', unit='METERS', format='1E', array=diameter),
-                        fits.Column(name='STAXYZ', unit='METERS', format='3D', array=staxyz)]
+                        fits.Column(name='DIAMETER', unit='m', format='1E', array=diameter),
+                        fits.Column(name='STAXYZ', unit='m', format='3D', array=staxyz)]
                 if revision >= 2:
-                    cols.append(fits.Column(name='FOV', format='D1', array=fov))
+                    cols.append(fits.Column(name='FOV', unit='arcsec', format='D1', array=fov))
                     cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             else:
@@ -1655,9 +1655,9 @@ class oifits(object):
                 data = tables[key]
                 nwave = self.wavelength[key[1]].eff_wave.size
                 cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                        fits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
-                        fits.Column(name='MJD', unit='DAY', format='1D', array=data['mjd']),
-                        fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time'])]
+                        fits.Column(name='TIME', format='1D', unit='s', array=data['time']),
+                        fits.Column(name='MJD', unit='day', format='1D', array=data['mjd']),
+                        fits.Column(name='INT_TIME', format='1D', unit='s', array=data['int_time'])]
                 # If TUNITs should be specified, do so
                 if (revision >= 2) and (key[3] == 'correlated flux'):
                     cols += [fits.Column(name='VISAMP', unit=key[4], format='%dD'%nwave, array=data['visamp']),
@@ -1665,10 +1665,10 @@ class oifits(object):
                 else:
                     cols += [fits.Column(name='VISAMP', format='%dD'%nwave, array=data['visamp']),
                              fits.Column(name='VISAMPERR', format='%dD'%nwave, array=data['visamperr'])]
-                cols += [fits.Column(name='VISPHI', unit='DEGREES', format='%dD'%nwave, array=data['visphi']),
-                         fits.Column(name='VISPHIERR', unit='DEGREES', format='%dD'%nwave, array=data['visphierr']),
-                         fits.Column(name='UCOORD', format='1D', unit='METERS', array=data['ucoord']),
-                         fits.Column(name='VCOORD', format='1D', unit='METERS', array=data['vcoord']),
+                cols += [fits.Column(name='VISPHI', unit='deg', format='%dD'%nwave, array=data['visphi']),
+                         fits.Column(name='VISPHIERR', unit='deg', format='%dD'%nwave, array=data['visphierr']),
+                         fits.Column(name='UCOORD', format='1D', unit='m', array=data['ucoord']),
+                         fits.Column(name='VCOORD', format='1D', unit='m', array=data['vcoord']),
                          fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
                          fits.Column(name='FLAG', format='%dL'%nwave)]
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
@@ -1737,13 +1737,13 @@ class oifits(object):
 
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs([
                     fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                    fits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
-                    fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
-                    fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time']),
+                    fits.Column(name='TIME', format='1D', unit='s', array=data['time']),
+                    fits.Column(name='MJD', format='1D', unit='day', array=data['mjd']),
+                    fits.Column(name='INT_TIME', format='1D', unit='s', array=data['int_time']),
                     fits.Column(name='VIS2DATA', format='%dD'%nwave, array=data['vis2data']),
                     fits.Column(name='VIS2ERR', format='%dD'%nwave, array=data['vis2err']),
-                    fits.Column(name='UCOORD', format='1D', unit='METERS', array=data['ucoord']),
-                    fits.Column(name='VCOORD', format='1D', unit='METERS', array=data['vcoord']),
+                    fits.Column(name='UCOORD', format='1D', unit='m', array=data['ucoord']),
+                    fits.Column(name='VCOORD', format='1D', unit='m', array=data['vcoord']),
                     fits.Column(name='STA_INDEX', format='2I', array=data['sta_index'], null=-1),
                     fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
                     ]))
@@ -1817,17 +1817,17 @@ class oifits(object):
 
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
                     fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                    fits.Column(name='TIME', format='1D', unit='SECONDS', array=data['time']),
-                    fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
-                    fits.Column(name='INT_TIME', format='1D', unit='SECONDS', array=data['int_time']),
+                    fits.Column(name='TIME', format='1D', unit='s', array=data['time']),
+                    fits.Column(name='MJD', format='1D', unit='day', array=data['mjd']),
+                    fits.Column(name='INT_TIME', format='1D', unit='s', array=data['int_time']),
                     fits.Column(name='T3AMP', format='%dD'%nwave, array=data['t3amp']),
                     fits.Column(name='T3AMPERR', format='%dD'%nwave, array=data['t3amperr']),
-                    fits.Column(name='T3PHI', format='%dD'%nwave, unit='DEGREES', array=data['t3phi']),
-                    fits.Column(name='T3PHIERR', format='%dD'%nwave, unit='DEGREES', array=data['t3phierr']),
-                    fits.Column(name='U1COORD', format='1D', unit='METERS', array=data['u1coord']),
-                    fits.Column(name='V1COORD', format='1D', unit='METERS', array=data['v1coord']),
-                    fits.Column(name='U2COORD', format='1D', unit='METERS', array=data['u2coord']),
-                    fits.Column(name='V2COORD', format='1D', unit='METERS', array=data['v2coord']),
+                    fits.Column(name='T3PHI', format='%dD'%nwave, unit='deg', array=data['t3phi']),
+                    fits.Column(name='T3PHIERR', format='%dD'%nwave, unit='deg', array=data['t3phierr']),
+                    fits.Column(name='U1COORD', format='1D', unit='m', array=data['u1coord']),
+                    fits.Column(name='V1COORD', format='1D', unit='m', array=data['v1coord']),
+                    fits.Column(name='U2COORD', format='1D', unit='m', array=data['u2coord']),
+                    fits.Column(name='V2COORD', format='1D', unit='m', array=data['v2coord']),
                     fits.Column(name='STA_INDEX', format='3I', array=data['sta_index'], null=-1),
                     fits.Column(name='FLAG', format='%dL'%nwave, array=data['flag'])
                     )))
@@ -1882,8 +1882,8 @@ class oifits(object):
                 nwave = self.wavelength[key[1]].eff_wave.size
 
                 cols = [fits.Column(name='TARGET_ID', format='1I', array=data['target_id']),
-                       fits.Column(name='MJD', format='1D', unit='DAY', array=data['mjd']),
-                       fits.Column(name='INT_TIME', format='1D', array=data['int_time']),
+                       fits.Column(name='MJD', format='1D', unit='day', array=data['mjd']),
+                       fits.Column(name='INT_TIME', format='1D', unit='s', array=data['int_time']),
                        fits.Column(name='FLUXDATA', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxdata']),
                        fits.Column(name='FLUXERR', unit=flux.fluxunit, format='%dD'%nwave, array=data['fluxerr'])]
                 # Station should only be present for 'uncalibrated' spectra
