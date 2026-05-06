@@ -1464,7 +1464,7 @@ class oifits(object):
             hdu = fits.BinTableHDU.from_columns(fits.ColDefs((
                 fits.Column(name='IINDX', format='1J', array=corr.iindx),
                 fits.Column(name='JINDX', format='1J', array=corr.iindx),
-                fits.Column(name='CORR', format='D1', array=corr.corr)
+                fits.Column(name='CORR', format='1D', array=corr.corr)
                 )))
             hdr = hdu.header
             hdr['EXTNAME'] = 'OI_CORR'
@@ -1583,8 +1583,8 @@ class oifits(object):
                         fits.Column(name='DIAMETER', unit='m', format='1E', array=diameter),
                         fits.Column(name='STAXYZ', unit='m', format='3D', array=staxyz)]
                 if revision >= 2:
-                    cols.append(fits.Column(name='FOV', unit='arcsec', format='D1', array=fov))
-                    cols.append(fits.Column(name='FOVTYPE', format='A6', array=fovtype))
+                    cols.append(fits.Column(name='FOV', unit='arcsec', format='1D', array=fov))
+                    cols.append(fits.Column(name='FOVTYPE', format='6A', array=fovtype))
                 hdu = fits.BinTableHDU.from_columns(fits.ColDefs(cols))
             else:
                 raise NotImplementedError('Attempting to write array with no stations defined.')
